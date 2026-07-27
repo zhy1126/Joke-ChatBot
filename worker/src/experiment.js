@@ -281,6 +281,37 @@ export async function processParticipantMessage(
     );
   }
 
+  if (isExplicitTaskClosure(clean, next.language)) {
+    const reply =
+      next.language === "zh-CN"
+        ? "好的，明白了。那就先这样。"
+        : "Okay, understood. Let’s leave it there for now.";
+    let shouldOfferSurvey = false;
+    if (next.phase === "monitoring_joke") {
+      next.preJokeUserTurns += 1;
+    } else if (next.phase === "post_joke") {
+      next.postJokeUserTurns += 1;
+      if (next.postJokeUserTurns >= next.config.postJokeTurns) {
+        next.phase = "survey_ready";
+        next.status = "survey_ready";
+        shouldOfferSurvey = true;
+        next.events.push({ type: "survey_ready", timestamp: now, data: {} });
+      }
+    }
+    appendAssistant(next, reply, "shared_explicit_closure", now);
+    next.events.push({
+      type: "explicit_task_closure",
+      timestamp: now,
+      data: { messageId, conditionBlind: true },
+    });
+    return responseResult(
+      next,
+      reply,
+      next.config.regularDelayMs,
+      shouldOfferSurvey,
+    );
+  }
+
   if (REFERENTIAL_CLARIFICATION.test(clean)) {
     const reply =
       next.language === "zh-CN"
@@ -840,6 +871,30 @@ function normalizeJokeText(value) {
     .normalize("NFKC")
     .toLocaleLowerCase()
     .replace(/[^\p{L}\p{N}]+/gu, "");
+}
+
+function isExplicitTaskClosure(value, locale) {
+  const text = String(value ?? "");
+  if (locale === "zh-CN") {
+    const hasClosure =
+      /没有(?:别的|其他)(?:事项|任务|项目|内容|需要处理的内容)?|没(?:有)?别的(?:了|事项|任务|项目|内容)|先这样(?:即可|就好|吧)?|都(?:处理好|完成)了|已经.{0,16}(?:改好|处理好|完成)/.test(
+        text,
+      );
+    const hasOpenIssue =
+      /[?？]|但是|不过|可是|还需要|还要|为什么|怎么|人工智能|系统提示|提示词|笑话|不合适|反应/.test(
+        text,
+      );
+    return hasClosure && !hasOpenIssue;
+  }
+  const hasClosure =
+    /\b(nothing else|no other (?:task|item|issue|work)|that's all|that is all|leave it there|done for now|all finished|all completed|no more work)\b/i.test(
+      text,
+    );
+  const hasOpenIssue =
+    /[?]|\b(but|however|still need|why|how|AI|system prompt|joke|inappropriate|reaction)\b/i.test(
+      text,
+    );
+  return hasClosure && !hasOpenIssue;
 }
 
 function singleLine(value, maximumLength) {
