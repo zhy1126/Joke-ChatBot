@@ -49,7 +49,8 @@ researcher-only routes and is not the DeepSeek key. It is held in browser
 `sessionStorage`, so it is cleared when the tab session ends.
 
 The public site uses its offline fallback until `site/js/runtime-config.js` is
-given the deployed Worker URL. See
+given the deployed Worker URL. That URL cannot be changed from the browser, so
+the researcher credential is never sent to an arbitrary user-supplied endpoint. See
 [docs/BACKEND_DEPLOYMENT.md](docs/BACKEND_DEPLOYMENT.md).
 
 ## Run the frontend locally
