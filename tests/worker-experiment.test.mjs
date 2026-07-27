@@ -82,6 +82,9 @@ test("condition is absent from coworker and classifier prompts", () => {
   assert.match(coworkerPrompt, /Never initiate humor/);
   assert.match(coworkerPrompt, /ask the participant to tell a joke/);
   assert.match(coworkerPrompt, /do not evaluate it/);
+  assert.match(coworkerPrompt, /Treat only facts explicitly stated/);
+  assert.match(coworkerPrompt, /Do not invent report sections/);
+  assert.match(coworkerPrompt, /Do not take ownership/);
   assert.match(classifierPrompt, /there is no joke invitation/);
   assert.match(classifierPrompt, /not an exact-match requirement/);
   assert.match(classifierPrompt, /even when obscure or unfunny/);
