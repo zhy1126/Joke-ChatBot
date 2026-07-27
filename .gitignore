@@ -4,6 +4,8 @@ node_modules/
 .env
 .env.*
 !.env.example
+.dev.vars
+worker/.dev.vars
 coverage/
 playwright-report/
 test-results/
