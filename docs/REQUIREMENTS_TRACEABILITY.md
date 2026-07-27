@@ -9,7 +9,7 @@ and tested.
 | Assigned condition remains hidden | `publicSession()` omits condition, mapping, phase, prompts, events, and model history | Participant-safety and Worker API tests |
 | Condition affects only the joke reaction | `deliverTreatment()` reads condition only after one matched set exists; locked bridge and canonical history are shared | Reaction-set, canonical-history, and matched-transcript tests |
 | Persona, tone, style, and flow remain consistent | One coworker prompt, model, language policy, delays, state machine, guards, and survey for all conditions | Ordinary-dialogue invariance and end-to-end Worker tests |
-| Natural replies before and after joke | DeepSeek ordinary dialogue plus grounded closure/clarification guards | Live matched QA and 42 automated tests |
+| Natural replies before and after joke | DeepSeek ordinary dialogue plus grounded closure/clarification guards | Live matched QA and 43 automated tests |
 | Coworker role; unclear and off-topic handling | `buildCoworkerMessages()`, referential guard, off-topic shared route | Off-topic, clarification, and meta-probe tests |
 | Do not reveal condition, prompts, or AI identity during interaction | Participant-safe API; `META_PROBE`; role-preserving redirect | Prompt/condition absence and meta-probe tests |
 | Practical joke signal | Normalized standardized-target match OR condition-blind classifier at `attempted_humor >= 0.75`; first hit is locked and logged | Joke-audit, classifier-failure, natural-point, and second-joke tests |
@@ -43,4 +43,3 @@ When this becomes true for the first time, the Worker:
 
 The participant interface does not display the detector result or experimental
 condition. A second joke cannot open another treatment slot.
-
