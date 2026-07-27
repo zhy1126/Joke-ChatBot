@@ -8,7 +8,7 @@
       content="Researcher-controlled workplace joke reaction experiment prototype."
     />
     <meta name="theme-color" content="#07c160" />
-    <title>WorkChat Lab 路 Joke Reaction Experiment</title>
+    <title>WorkChat Lab · Joke Reaction Experiment</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="stylesheet" href="./styles.css" />
@@ -35,19 +35,19 @@
 
         <nav class="sidebar-nav" aria-label="Researcher sections">
           <button class="nav-button active" data-scroll-to="overview-panel">
-            <span class="nav-icon">鈱?/span>
+            <span class="nav-icon">⌂</span>
             Overview
           </button>
           <button class="nav-button" data-scroll-to="configuration-panel">
-            <span class="nav-icon">鈿?/span>
+            <span class="nav-icon">⚙</span>
             Experiment setup
           </button>
           <button class="nav-button" data-scroll-to="sessions-panel">
-            <span class="nav-icon">鈼?/span>
+            <span class="nav-icon">◫</span>
             Sessions
           </button>
           <button class="nav-button" data-scroll-to="data-panel">
-            <span class="nav-icon">鈬?/span>
+            <span class="nav-icon">⇩</span>
             Data & export
           </button>
         </nav>
@@ -100,28 +100,28 @@
 
           <div class="metric-grid">
             <article class="metric-card">
-              <span class="metric-icon green">鈼?/span>
+              <span class="metric-icon green">◉</span>
               <div>
                 <span class="metric-label">Sessions created</span>
                 <strong id="metric-total">0</strong>
               </div>
             </article>
             <article class="metric-card">
-              <span class="metric-icon blue">鉁?/span>
+              <span class="metric-icon blue">✓</span>
               <div>
                 <span class="metric-label">Treatment delivered</span>
                 <strong id="metric-treated">0</strong>
               </div>
             </article>
             <article class="metric-card">
-              <span class="metric-icon amber">鈻?/span>
+              <span class="metric-icon amber">▤</span>
               <div>
                 <span class="metric-label">Completed surveys</span>
                 <strong id="metric-surveys">0</strong>
               </div>
             </article>
             <article class="metric-card">
-              <span class="metric-icon purple">鈱?/span>
+              <span class="metric-icon purple">⌁</span>
               <div>
                 <span class="metric-label">Active configuration</span>
                 <strong id="metric-mode">Study</strong>
@@ -173,8 +173,8 @@
                   <label>
                     Trigger mode
                     <select id="trigger-mode" name="triggerMode">
-                      <option value="study">Study 路 staged trigger</option>
-                      <option value="auto_demo">Exploratory 路 automatic demo</option>
+                      <option value="study">Study · staged trigger</option>
+                      <option value="auto_demo">Exploratory · automatic demo</option>
                     </select>
                   </label>
                   <label>
@@ -201,15 +201,15 @@
               <fieldset>
                 <legend>Condition reactions</legend>
                 <label class="condition-field negative-field">
-                  <span><b>Negative</b> 路 clear disapproval</span>
+                  <span><b>Negative</b> · clear disapproval</span>
                   <textarea id="negative-reaction" name="negativeReaction" rows="2"></textarea>
                 </label>
                 <label class="condition-field neutral-field">
-                  <span><b>Neutral</b> 路 no clear evaluation</span>
+                  <span><b>Neutral</b> · no clear evaluation</span>
                   <textarea id="neutral-reaction" name="neutralReaction" rows="2"></textarea>
                 </label>
                 <label class="condition-field positive-field">
-                  <span><b>Polite-positive</b> 路 courteous weak approval</span>
+                  <span><b>Polite-positive</b> · courteous weak approval</span>
                   <textarea
                     id="positive-reaction"
                     name="positiveReaction"
@@ -302,11 +302,11 @@
                 </div>
               </div>
               <ul>
-                <li><span>鉁?/span> One shared coworker persona</li>
-                <li><span>鉁?/span> Server-style fixed reaction slot</li>
-                <li><span>鉁?/span> Condition-blind joke audit</li>
-                <li><span>鉁?/span> Canonical post-reaction history</li>
-                <li><span>鉁?/span> One treatment delivery per session</li>
+                <li><span>✓</span> One shared coworker persona</li>
+                <li><span>✓</span> Server-style fixed reaction slot</li>
+                <li><span>✓</span> Condition-blind joke audit</li>
+                <li><span>✓</span> Canonical post-reaction history</li>
+                <li><span>✓</span> One treatment delivery per session</li>
               </ul>
             </section>
           </aside>
@@ -337,7 +337,7 @@
               <tbody id="session-table-body"></tbody>
             </table>
             <div id="empty-sessions" class="empty-state">
-              <span>鈼?/span>
+              <span>◫</span>
               <h3>No sessions yet</h3>
               <p>Create a session to generate a participant chat.</p>
             </div>
@@ -382,7 +382,7 @@
 
         <footer class="researcher-footer">
           <span>WorkChat Lab prototype</span>
-          <span>GitHub Pages 路 No API keys stored</span>
+          <span>GitHub Pages · No API keys stored</span>
         </footer>
       </main>
     </div>
@@ -405,7 +405,7 @@
           <p id="participant-scenario"></p>
           <div class="intro-details">
             <span><b>Format</b> Text conversation</span>
-            <span><b>Length</b> About 3鈥? minutes</span>
+            <span><b>Length</b> About 3–5 minutes</span>
             <span><b>Privacy</b> Use no identifying information</span>
           </div>
           <div class="task-card">
@@ -425,14 +425,14 @@
       <section id="chat-shell" class="chat-shell hidden" aria-label="Workplace chat">
         <aside class="wechat-rail" aria-hidden="true">
           <div class="self-avatar">P</div>
-          <button class="rail-icon active">鈼?/button>
-          <button class="rail-icon">鈻?/button>
-          <button class="rail-icon">鈽?/button>
-          <button class="rail-icon rail-bottom">鈽?/button>
+          <button class="rail-icon active">●</button>
+          <button class="rail-icon">□</button>
+          <button class="rail-icon">☷</button>
+          <button class="rail-icon rail-bottom">☰</button>
         </aside>
 
         <aside class="conversation-list">
-          <div class="conversation-search">鈱?<span>Search</span></div>
+          <div class="conversation-search">⌕ <span>Search</span></div>
           <div class="conversation-item active">
             <div class="contact-avatar coworker-avatar">A</div>
             <div class="conversation-summary">
@@ -453,7 +453,7 @@
               <span id="chat-status">Online</span>
             </div>
             <button id="end-conversation" class="chat-menu" type="button" title="End conversation">
-              路路路
+              ···
             </button>
           </header>
 
@@ -466,9 +466,9 @@
 
           <form id="message-form" class="message-composer">
             <div class="composer-tools" aria-hidden="true">
-              <span>鈽?/span>
-              <span>鈻?/span>
-              <span>鈱?/span>
+              <span>☺</span>
+              <span>▣</span>
+              <span>⌕</span>
             </div>
             <textarea
               id="message-input"
@@ -478,7 +478,7 @@
               aria-label="Message"
             ></textarea>
             <div class="composer-footer">
-              <span>Enter to send 路 Shift+Enter for a new line</span>
+              <span>Enter to send · Shift+Enter for a new line</span>
               <button id="send-button" class="send-button" type="submit">Send</button>
             </div>
           </form>
@@ -500,7 +500,7 @@
           <div class="choice-grid">
             <label><input type="radio" name="identityGuess" value="human" required /> Human</label>
             <label><input type="radio" name="identityGuess" value="ai" /> AI chatbot</label>
-            <label><input type="radio" name="identityGuess" value="mixed" /> Human鈥揂I system</label>
+            <label><input type="radio" name="identityGuess" value="mixed" /> Human–AI system</label>
             <label><input type="radio" name="identityGuess" value="unsure" /> Not sure</label>
           </div>
         </fieldset>
@@ -552,7 +552,7 @@
         </fieldset>
 
         <fieldset>
-          <legend>The coworker鈥檚 response felt natural.</legend>
+          <legend>The coworker’s response felt natural.</legend>
           <div class="likert-row">
             <span>Strongly disagree</span>
             <div class="likert-options">
@@ -574,7 +574,7 @@
 
     <div id="debrief-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
       <div class="debrief-modal">
-        <span class="debrief-icon">鉁?/span>
+        <span class="debrief-icon">✓</span>
         <p class="eyebrow">Study complete</p>
         <h2>Thank you for taking part</h2>
         <p>
