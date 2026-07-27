@@ -57,8 +57,8 @@ npm run worker:deploy
 
 For Cloudflare Workers Builds connected to this GitHub repository, leave the
 optional build command blank and use `npm run worker:deploy` as the deploy
-command. The script resolves the existing D1 database, deploys the Worker, then
-applies the tracked schema migration.
+command. The script deploys first so D1 can be provisioned, then applies the
+tracked schema migration.
 
 Copy the resulting HTTPS Worker URL and verify:
 
@@ -96,8 +96,8 @@ reviewed update to `runtime-config.js`.
 - Choose Chinese and verify the opening and ordinary responses are Chinese.
 - Reach the joke stage and verify exactly one context-aware reaction is
   delivered.
-- Confirm the researcher export contains all three generated candidates and one
-  shared canonical follow-up for audit.
+- Confirm the researcher export contains all three generated prefixes and one
+  locked shared canonical bridge for audit.
 - Verify the researcher export contains the condition and chosen card.
 - Inspect the participant network responses and confirm no condition or mapping
   appears.
@@ -110,3 +110,4 @@ has a configurable hard message limit (24 by default), output is capped at 180
 tokens per model call, requests time out after 20 seconds, and the Worker accepts
 browser calls only from the configured GitHub Pages and local-development
 origins.
+
