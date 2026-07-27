@@ -715,18 +715,7 @@ async function deliverTreatment(
     }
   }
 
-  const fallbackPrefixes =
-    next.language === "zh-CN"
-      ? {
-          negative: "这个笑话不太适合工作场合。",
-          neutral: "……",
-          polite_positive: "哈哈……",
-        }
-      : {
-          negative: "That’s not really appropriate for work.",
-          neutral: "...",
-          polite_positive: "Heh...",
-        };
+  const fallbackPrefixes = configuredFallbackPrefixes(config, next.language);
   const visibleReaction =
     matchedSet?.[next.condition] ??
     joinReaction(
@@ -792,6 +781,32 @@ function appendParticipant(session, text, kind, timestamp, id) {
   const message = { id, role: "participant", text, kind, timestamp };
   session.messages.push(message);
   session.modelHistory.push(structuredClone(message));
+}
+
+function configuredFallbackPrefixes(config, locale) {
+  const defaults =
+    locale === "zh-CN"
+      ? {
+          negative: "这个笑话不太适合工作场合。",
+          neutral: "……",
+          polite_positive: "哈哈……",
+        }
+      : {
+          negative: "That’s not really appropriate for work.",
+          neutral: "...",
+          polite_positive: "Heh...",
+        };
+  const canonical = String(config.canonicalReaction ?? "").trim();
+  return Object.fromEntries(
+    Object.entries(defaults).map(([condition, fallback]) => {
+      const configured = String(config.reactions?.[condition] ?? "").trim();
+      const prefix =
+        canonical && configured.endsWith(canonical)
+          ? configured.slice(0, -canonical.length).trim()
+          : "";
+      return [condition, prefix || fallback];
+    }),
+  );
 }
 
 function appendAssistant(
