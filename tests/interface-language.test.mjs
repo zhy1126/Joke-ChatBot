@@ -10,6 +10,11 @@ const remoteApp = await readFile(
   new URL("../site/js/remote-app.js", import.meta.url),
   "utf8",
 );
+const app = await readFile(new URL("../site/js/app.js", import.meta.url), "utf8");
+const evaluator = await readFile(
+  new URL("../site/js/evaluator.js", import.meta.url),
+  "utf8",
+);
 
 test("researcher form hides the separate Chinese opening-message field", () => {
   assert.doesNotMatch(html, /id="opening-message-zh"/);
@@ -58,4 +63,16 @@ test("formal sessions and participant preview default to blind card choice", () 
     remoteApp,
     /preview-button[\s\S]{0,400}assignmentMethod: "participant_blind"/,
   );
+});
+
+test("public evaluator is permanent, passwordless, and browser-local", () => {
+  assert.match(html, /href="\.\/\?view=evaluator"/);
+  assert.match(html, /id="evaluator-view"/);
+  assert.match(html, /No password or account is required\./);
+  assert.match(html, /excluded from research data/);
+  assert.match(app, /activeView === "evaluator"/);
+  assert.match(app, /initializeEvaluator\(\)/);
+  assert.doesNotMatch(evaluator, /createRemoteApi|researcherKey|fetch\(/);
+  assert.match(evaluator, /for \(const condition of CONDITIONS\)/);
+  assert.match(evaluator, /submitParticipantMessage\(current, text\)/);
 });
