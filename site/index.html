@@ -198,10 +198,7 @@
                   Workplace scenario
                   <textarea id="scenario-text" name="scenarioText" rows="3"></textarea>
                 </label>
-                <label>
-                  Workplace scenario · 中文
-                  <textarea id="scenario-text-zh" name="scenarioTextZh" rows="3"></textarea>
-                </label>
+                <input id="scenario-text-zh" name="scenarioTextZh" type="hidden" />
                 <label>
                   Opening message
                   <textarea id="opening-message" name="openingMessage" rows="3"></textarea>
@@ -233,18 +230,12 @@
                   Standard joke invitation
                   <textarea id="joke-cue" name="jokeCue" rows="2"></textarea>
                 </label>
-                <label>
-                  Standard joke invitation · 中文
-                  <textarea id="joke-cue-zh" name="jokeCueZh" rows="2"></textarea>
-                </label>
+                <input id="joke-cue-zh" name="jokeCueZh" type="hidden" />
                 <label>
                   Participant task joke
                   <textarea id="target-joke" name="targetJoke" rows="2"></textarea>
                 </label>
-                <label>
-                  Participant task joke · 中文
-                  <textarea id="target-joke-zh" name="targetJokeZh" rows="2"></textarea>
-                </label>
+                <input id="target-joke-zh" name="targetJokeZh" type="hidden" />
               </fieldset>
 
               <fieldset>
@@ -259,18 +250,20 @@
                   <span><b>Negative fallback</b> · clear disapproval</span>
                   <textarea id="negative-reaction" name="negativeReaction" rows="2"></textarea>
                 </label>
-                <label class="condition-field negative-field">
-                  <span><b>Negative · 中文</b></span>
-                  <textarea id="negative-reaction-zh" name="negativeReactionZh" rows="2"></textarea>
-                </label>
+                <input
+                  id="negative-reaction-zh"
+                  name="negativeReactionZh"
+                  type="hidden"
+                />
                 <label class="condition-field neutral-field">
                   <span><b>Neutral fallback</b> · no clear evaluation</span>
                   <textarea id="neutral-reaction" name="neutralReaction" rows="2"></textarea>
                 </label>
-                <label class="condition-field neutral-field">
-                  <span><b>Neutral · 中文</b></span>
-                  <textarea id="neutral-reaction-zh" name="neutralReactionZh" rows="2"></textarea>
-                </label>
+                <input
+                  id="neutral-reaction-zh"
+                  name="neutralReactionZh"
+                  type="hidden"
+                />
                 <label class="condition-field positive-field">
                   <span><b>Polite-positive fallback</b> · courteous weak approval</span>
                   <textarea
@@ -279,14 +272,11 @@
                     rows="2"
                   ></textarea>
                 </label>
-                <label class="condition-field positive-field">
-                  <span><b>Polite-positive · 中文</b></span>
-                  <textarea
-                    id="positive-reaction-zh"
-                    name="positiveReactionZh"
-                    rows="2"
-                  ></textarea>
-                </label>
+                <input
+                  id="positive-reaction-zh"
+                  name="positiveReactionZh"
+                  type="hidden"
+                />
                 <label>
                   Canonical fallback sent to the dialogue engine
                   <textarea
@@ -295,14 +285,11 @@
                     rows="2"
                   ></textarea>
                 </label>
-                <label>
-                  Canonical fallback · 中文
-                  <textarea
-                    id="canonical-reaction-zh"
-                    name="canonicalReactionZh"
-                    rows="2"
-                  ></textarea>
-                </label>
+                <input
+                  id="canonical-reaction-zh"
+                  name="canonicalReactionZh"
+                  type="hidden"
+                />
                 <div class="form-row two-columns">
                   <label>
                     Reaction delay (milliseconds)
