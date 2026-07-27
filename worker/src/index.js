@@ -296,7 +296,7 @@ async function enforcePublicEvaluatorLimits(request, env) {
   const clientHash = await evaluatorClientHash(request, env);
   const clientLimit = positiveInteger(
     env.PUBLIC_EVALUATOR_CLIENT_DAILY_LIMIT,
-    3,
+    4,
   );
   if (
     recent.filter(
