@@ -25,8 +25,8 @@ The public GitHub Pages address is:
 - Researcher manual assignment, balanced random assignment, and participant
   blind card choice.
 - A different secret A/B/C-to-condition mapping for every blind-choice session.
-- Server-only condition storage, matched reaction candidates, fallback
-  templates, model credentials, and
+- Server-only condition storage, matched AI-generated reaction prefixes,
+  locked condition-neutral bridges, fallback templates, model credentials, and
   experiment records.
 - Identical coworker prompt, persona, language policy, timing policy, and
   canonical post-reaction model history across conditions.
@@ -42,10 +42,12 @@ checked by a condition-blind multilingual classifier and a normalized target
 matcher. They identify an attempt to tell a joke rather than judging whether it
 is funny. Ordinary work talk, refusals, and clarification requests continue
 through the same coworker model in every condition. A confirmed first joke
-causes DeepSeek to generate all three context-aware reaction candidates plus one
-shared work-topic follow-up in a single JSON response. The server validates the
-set and displays only the assigned candidate. Fixed wording is retained solely
-as a failure fallback.
+causes DeepSeek to generate all three context-aware reaction prefixes in one
+condition-blind JSON response. The server validates the set, appends one locked
+condition-neutral bridge selected from the shared task state, and only then
+reads the assigned condition. Narrow shared guards handle explicit closure and
+referential clarification without guessing. Researcher-configured fixed
+wording is retained solely as a generation-failure fallback.
 
 ## Security boundary
 
@@ -94,7 +96,9 @@ The test suite covers:
 - English and Chinese wording;
 - condition absence from every DeepSeek prompt;
 - condition-blind joke classification;
-- contextual matched-triplet reaction generation and validation;
+- contextual matched-triplet prefix generation and validation;
+- a locked, grounded bridge and canonical post-reaction history;
+- condition-blind clarification and explicit-closure guards;
 - natural-point joke detection without a coworker invitation;
 - one-time treatment delivery;
 - canonicalized model history;
@@ -125,3 +129,4 @@ implementation, test generation, security review, and documentation.
 DeepSeek V4 Flash is the configured runtime model for bilingual ordinary
 dialogue and condition-blind joke auditing once the Worker is deployed. No
 model key is included in this repository.
+
