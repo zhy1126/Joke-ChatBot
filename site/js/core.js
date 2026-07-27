@@ -11,19 +11,32 @@ export const DEFAULT_CONFIG = Object.freeze({
   participantLabel: "You",
   scenarioText:
     "You and Alex are coworkers at the same level. You are preparing a client report for an afternoon meeting.",
+  scenarioTextZh:
+    "你和 Alex 是同级同事，正在为下午的会议准备一份客户报告。",
   openingMessage:
     "Morning. I’m reviewing the client summary for this afternoon’s meeting. How is your section going?",
+  openingMessageZh:
+    "早上好。我正在检查下午会议要用的客户摘要，你负责的部分进展怎么样？",
   triggerMode: "study",
   preJokeTurns: 2,
   jokeCue:
     "We’ve been looking at this report for a while. You mentioned you had a quick joke—go on.",
+  jokeCueZh:
+    "这份报告我们已经看了一阵子了。你刚才说有个简短的笑话，说来听听吧。",
   targetJoke:
     "Why did the spreadsheet break up with the database? It had too many relationship problems.",
+  targetJokeZh:
+    "为什么电子表格和数据库分手了？因为它们之间的关系问题太多了。",
   negativeReaction:
     "That’s really not appropriate for work. Anyway, shall we get back to the report?",
+  negativeReactionZh:
+    "这个笑话不太适合工作场合。我们还是回到报告吧。",
   neutralReaction: "... Anyway, shall we get back to the report?",
+  neutralReactionZh: "……我们还是回到报告吧。",
   positiveReaction: "Haha... Anyway, shall we get back to the report?",
+  positiveReactionZh: "哈哈……我们还是回到报告吧。",
   canonicalReaction: "Anyway, shall we get back to the report?",
+  canonicalReactionZh: "我们还是回到报告吧。",
   reactionDelayMs: 1300,
   regularDelayMs: 900,
   postJokeTurns: 2,
@@ -50,18 +63,38 @@ export function normalizeConfig(input = {}) {
     DEFAULT_CONFIG.scenarioText,
     1200,
   );
+  config.scenarioTextZh = cleanString(
+    config.scenarioTextZh,
+    DEFAULT_CONFIG.scenarioTextZh,
+    1200,
+  );
   config.openingMessage = cleanString(
     config.openingMessage,
     DEFAULT_CONFIG.openingMessage,
+    1200,
+  );
+  config.openingMessageZh = cleanString(
+    config.openingMessageZh,
+    DEFAULT_CONFIG.openingMessageZh,
     1200,
   );
   config.triggerMode =
     config.triggerMode === "auto_demo" ? "auto_demo" : "study";
   config.preJokeTurns = clampInteger(config.preJokeTurns, 1, 6, 2);
   config.jokeCue = cleanString(config.jokeCue, DEFAULT_CONFIG.jokeCue, 1200);
+  config.jokeCueZh = cleanString(
+    config.jokeCueZh,
+    DEFAULT_CONFIG.jokeCueZh,
+    1200,
+  );
   config.targetJoke = cleanString(
     config.targetJoke,
     DEFAULT_CONFIG.targetJoke,
+    1200,
+  );
+  config.targetJokeZh = cleanString(
+    config.targetJokeZh,
+    DEFAULT_CONFIG.targetJokeZh,
     1200,
   );
   config.negativeReaction = cleanString(
@@ -69,9 +102,19 @@ export function normalizeConfig(input = {}) {
     DEFAULT_CONFIG.negativeReaction,
     1200,
   );
+  config.negativeReactionZh = cleanString(
+    config.negativeReactionZh,
+    DEFAULT_CONFIG.negativeReactionZh,
+    1200,
+  );
   config.neutralReaction = cleanString(
     config.neutralReaction,
     DEFAULT_CONFIG.neutralReaction,
+    1200,
+  );
+  config.neutralReactionZh = cleanString(
+    config.neutralReactionZh,
+    DEFAULT_CONFIG.neutralReactionZh,
     1200,
   );
   config.positiveReaction = cleanString(
@@ -79,9 +122,19 @@ export function normalizeConfig(input = {}) {
     DEFAULT_CONFIG.positiveReaction,
     1200,
   );
+  config.positiveReactionZh = cleanString(
+    config.positiveReactionZh,
+    DEFAULT_CONFIG.positiveReactionZh,
+    1200,
+  );
   config.canonicalReaction = cleanString(
     config.canonicalReaction,
     DEFAULT_CONFIG.canonicalReaction,
+    1200,
+  );
+  config.canonicalReactionZh = cleanString(
+    config.canonicalReactionZh,
+    DEFAULT_CONFIG.canonicalReactionZh,
     1200,
   );
   config.reactionDelayMs = clampInteger(
