@@ -183,7 +183,7 @@ npm test
 npm run check
 ```
 
-The current suite contains 42 tests covering:
+The current suite contains 43 tests covering:
 
 - all assignment modes and blind-card locking;
 - participant-safe API responses;
@@ -232,7 +232,7 @@ worker/
   src/index.js               Worker routes, D1 persistence, DeepSeek client
   migrations/                D1 schema
   wrangler.toml              Non-secret Worker configuration
-tests/                       42 automated control and regression tests
+tests/                       43 automated control and regression tests
 docs/
   PROMPTS.md                 Submitted prompts and model parameters
   SUBMISSION.md              <500-word explanation and matched transcripts
