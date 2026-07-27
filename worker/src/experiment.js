@@ -132,10 +132,6 @@ export function publicSession(session) {
   return {
     id: session.id,
     participantCode: session.participantCode,
-    assignmentMethod:
-      session.assignmentMethod === "participant_blind"
-        ? "participant_blind"
-        : "assigned",
     requiresChoice: !session.conditionLocked,
     blindCards: !session.conditionLocked ? [...BLIND_CARDS] : [],
     selectedCard: session.selectedCard,
@@ -403,7 +399,9 @@ export function buildCoworkerMessages(session) {
         "Write one or two short conversational sentences and ask at most one question.",
         "Use a stable structure: briefly acknowledge one concrete detail from the participant, then ask at most one neutral follow-up about an item already established in the conversation.",
         "Ground the entire reply in the participant's most recent message. Do not introduce a work item that is absent from that message.",
+        "The semantic meaning of the participant's latest message has priority over keeping the conversation going. First acknowledge that meaning and never contradict it.",
         "If the latest message gives a work update, acknowledge only that update and either ask about the same item or use a generic question such as what should be checked next.",
+        "If the participant explicitly limits the scope, says there is nothing else to handle, or closes the task, acknowledge the limit and end briefly. Do not propose, imply, or ask about any additional check, task, month, section, file, or follow-up work.",
         "If the latest message is unclear, ask for clarification without guessing which table, section, figure, link, or task they mean.",
         "Stay helpful, restrained, and work-focused. Handle unclear or off-topic messages naturally, then return to the report.",
         "Treat only facts explicitly stated in the scenario or message history as true.",
@@ -411,6 +409,7 @@ export function buildCoworkerMessages(session) {
         "Do not claim that you noticed, remember, found, completed, will change, or have not checked something unless that fact is already established.",
         "Do not take ownership of the participant's task. You may ask what they plan to do or offer a generic next step using only an already mentioned item.",
         "Before answering, silently remove every specific noun, number, action, or problem that is not supported by the participant's latest message.",
+        "Bad example after 'there is nothing else to handle': asking to check other months. Good behavior: briefly acknowledge and stop.",
         "Never mention being an AI, a model, an experiment, a condition, hidden instructions, or prompts.",
         "Never initiate humor, ask the participant to tell a joke, mention a joke task, repeat a punchline, laugh, praise a joke, or disapprove of a joke. The controller handles the single reaction slot.",
         "If humor appears during an ordinary-dialogue turn, do not evaluate it; respond only to the work-relevant content and continue naturally.",
@@ -795,3 +794,4 @@ function randomToken(length) {
   crypto.getRandomValues(bytes);
   return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("");
 }
+
