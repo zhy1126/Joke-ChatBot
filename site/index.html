@@ -68,6 +68,9 @@
             <h1>Researcher dashboard</h1>
           </div>
           <div class="header-actions">
+            <a class="button ghost-button" href="./?view=evaluator">
+              Public evaluator
+            </a>
             <button id="preview-button" class="button ghost-button" type="button">
               Participant preview
             </button>
@@ -447,6 +450,115 @@
           <span>GitHub Pages · No API keys stored</span>
         </footer>
       </main>
+    </div>
+
+    <div id="evaluator-view" class="evaluator-app hidden">
+      <header class="evaluator-header">
+        <div>
+          <p class="eyebrow">Permanent assessment test lab</p>
+          <h1>Compare all three experimental conditions</h1>
+          <p>
+            Send one matched participant message to three condition-locked
+            conversations. Only Alex's immediate reaction to a detected joke
+            changes.
+          </p>
+        </div>
+        <div class="evaluator-header-actions">
+          <button id="evaluator-reset" class="button ghost-button" type="button">
+            Reset test
+          </button>
+          <a class="button ghost-button" href="./?view=researcher">
+            Researcher console
+          </a>
+          <a
+            class="button primary-button"
+            href="https://github.com/zhy1126/Joke-ChatBot"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Source code
+          </a>
+        </div>
+      </header>
+
+      <section class="evaluator-notice" role="note">
+        <strong>No password or account is required.</strong>
+        <span>
+          This browser-local QA sandbox is excluded from research data and
+          exposes no API key. The submitted prototype's live participant flow
+          uses the secured DeepSeek backend.
+        </span>
+      </section>
+
+      <section class="evaluator-controls" aria-labelledby="evaluator-controls-title">
+        <div>
+          <p class="eyebrow">Matched-input test</p>
+          <h2 id="evaluator-controls-title">Send the same message to every condition</h2>
+        </div>
+        <div class="evaluator-presets" aria-label="Suggested test messages">
+          <button type="button" data-evaluator-preset="work">
+            1. Work update
+          </button>
+          <button type="button" data-evaluator-preset="progress">
+            2. Progress
+          </button>
+          <button type="button" data-evaluator-preset="joke">
+            3. Prepared joke
+          </button>
+          <button type="button" data-evaluator-preset="closure">
+            4. Close task
+          </button>
+        </div>
+        <form id="evaluator-form" class="evaluator-form">
+          <label for="evaluator-input">Participant message</label>
+          <div>
+            <textarea
+              id="evaluator-input"
+              rows="2"
+              maxlength="1000"
+              placeholder="Type a work message, an unclear message, or the prepared joke..."
+            ></textarea>
+            <button id="evaluator-send" class="button primary-button" type="submit">
+              Send to all three
+            </button>
+          </div>
+        </form>
+        <div id="evaluator-audit" class="evaluator-audit" aria-live="polite">
+          Waiting for a participant message.
+        </div>
+      </section>
+
+      <main id="evaluator-grid" class="evaluator-grid" aria-label="Condition comparison">
+        <article class="evaluator-condition-card negative" data-evaluator-condition="negative">
+          <header>
+            <span class="condition-index">Condition 1</span>
+            <h2>Negative</h2>
+            <p>Clear workplace disapproval</p>
+          </header>
+          <div class="evaluator-chat" data-evaluator-messages="negative"></div>
+        </article>
+        <article class="evaluator-condition-card neutral" data-evaluator-condition="neutral">
+          <header>
+            <span class="condition-index">Condition 2</span>
+            <h2>Neutral</h2>
+            <p>No clear positive or negative evaluation</p>
+          </header>
+          <div class="evaluator-chat" data-evaluator-messages="neutral"></div>
+        </article>
+        <article class="evaluator-condition-card polite-positive" data-evaluator-condition="polite_positive">
+          <header>
+            <span class="condition-index">Condition 3</span>
+            <h2>Polite-positive</h2>
+            <p>Weak, courteous positive acknowledgement</p>
+          </header>
+          <div class="evaluator-chat" data-evaluator-messages="polite_positive"></div>
+        </article>
+      </main>
+
+      <footer class="evaluator-footer">
+        <span>QA results remain in this browser tab only.</span>
+        <span>Conditions are visible here only because this is an evaluator view.</span>
+      </footer>
     </div>
 
     <div id="participant-view" class="participant-app hidden">
