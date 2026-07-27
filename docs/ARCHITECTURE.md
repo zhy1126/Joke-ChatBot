@@ -42,7 +42,7 @@ Every nonmanipulated component is shared:
 - English/Chinese language policy;
 - system prompt and generation parameters;
 - joke classifier;
-- pre-joke and post-joke state transitions;
+- pre-treatment monitoring and post-joke state transitions;
 - response delays;
 - survey;
 - maximum message count; and
@@ -72,18 +72,30 @@ literal participant choice can introduce selection effects. The per-session
 secret permutation prevents a general preference for A, B, or C from
 systematically selecting a reaction condition.
 
+The researcher console also offers `QA test pack · all three conditions`. This
+is not an experimental assignment method. It creates three separate manual
+sessions with the same configuration and `sessionPurpose: "qa"`, one for each
+condition. Keeping them separate prevents earlier reactions from contaminating
+later comparisons. QA sessions are labelled, excluded from formal dashboard
+metrics, and remain flagged in exports.
+
 ## Joke signal
 
-Formal study mode opens a `joke_window` after the same number of participant
-turns and the same invitation. DeepSeek classifies the next message as attempted
-humor, refusal, clarification, or other without seeing the condition.
+The coworker never requests a joke. Before the conversation, the participant
+interface instructs everyone to introduce the same prepared joke after at least
+one work-related exchange, at a moment that feels natural. The server remains
+in `monitoring_joke` and sends every untreated participant message to the same
+condition-blind classifier.
 
-The classifier is an audit and protocol-deviation check, not a funniness judge.
-A refusal or clarification keeps the window open. The next substantive message
-triggers generation and selection of the matched reaction set, reducing
-differential misclassification of Chinese puns, English jokes, and culturally
-specific humor.
+The primary reproducible signal is a normalized match to the standardized joke.
+The multilingual classifier provides a second signal for paraphrases, puns, and
+other clear humor attempts. It labels attempted humor, refusal, clarification,
+or other without seeing the condition and without judging funniness. Ordinary
+messages continue through the shared coworker model; only a confirmed first
+joke opens the one-time reaction slot. If classification fails, an exact target
+match can still trigger, while all other messages receive the same ordinary
+reply path and the technical event is logged.
 
-Automatic demo mode may use high-confidence `attempted_humor` classification as
-the trigger, but should not replace the staged protocol in confirmatory data
-collection without a separately validated bilingual classifier benchmark.
+Open-humor mode is useful for exploratory demonstrations. Confirmatory studies
+should retain one pretested standardized joke so joke content, offensiveness,
+length, and cultural familiarity do not become additional manipulations.
