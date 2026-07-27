@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Researcher-controlled workplace joke reaction experiment prototype."
+    />
+    <meta name="theme-color" content="#07c160" />
+    <title>WorkChat Lab 路 Joke Reaction Experiment</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="researcher-view" class="researcher-app">
+      <aside class="researcher-sidebar">
+        <div class="brand-lockup">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 48 48">
+              <path
+                d="M8 10.5h24a7 7 0 0 1 7 7v9a7 7 0 0 1-7 7H20l-8.5 6v-6H8a7 7 0 0 1-7-7v-9a7 7 0 0 1 7-7Z"
+              />
+              <circle cx="13" cy="22" r="2" />
+              <circle cx="20" cy="22" r="2" />
+              <circle cx="27" cy="22" r="2" />
+            </svg>
+          </span>
+          <span>
+            <strong>WorkChat Lab</strong>
+            <small>Experiment Console</small>
+          </span>
+        </div>
+
+        <nav class="sidebar-nav" aria-label="Researcher sections">
+          <button class="nav-button active" data-scroll-to="overview-panel">
+            <span class="nav-icon">鈱?/span>
+            Overview
+          </button>
+          <button class="nav-button" data-scroll-to="configuration-panel">
+            <span class="nav-icon">鈿?/span>
+            Experiment setup
+          </button>
+          <button class="nav-button" data-scroll-to="sessions-panel">
+            <span class="nav-icon">鈼?/span>
+            Sessions
+          </button>
+          <button class="nav-button" data-scroll-to="data-panel">
+            <span class="nav-icon">鈬?/span>
+            Data & export
+          </button>
+        </nav>
+
+        <div class="sidebar-bottom">
+          <span class="status-dot"></span>
+          <span>
+            <strong>Prototype mode</strong>
+            <small>Browser-local storage</small>
+          </span>
+        </div>
+      </aside>
+
+      <main class="researcher-main">
+        <header class="researcher-header">
+          <div>
+            <p class="eyebrow">Joke Reaction Experiment</p>
+            <h1>Researcher dashboard</h1>
+          </div>
+          <div class="header-actions">
+            <button id="preview-button" class="button ghost-button" type="button">
+              Participant preview
+            </button>
+            <button id="create-session-top" class="button primary-button" type="button">
+              + Create session
+            </button>
+          </div>
+        </header>
+
+        <section class="prototype-notice" role="note">
+          <span class="notice-icon">i</span>
+          <div>
+            <strong>GitHub Pages prototype</strong>
+            <p>
+              All routine experiment settings can be changed below. Data is currently
+              stored in this browser; a server backend is required before collecting
+              real participants across devices.
+            </p>
+          </div>
+        </section>
+
+        <section id="overview-panel" class="dashboard-section">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Live overview</p>
+              <h2>Experiment at a glance</h2>
+            </div>
+            <span id="config-version-badge" class="version-badge">Config v1</span>
+          </div>
+
+          <div class="metric-grid">
+            <article class="metric-card">
+              <span class="metric-icon green">鈼?/span>
+              <div>
+                <span class="metric-label">Sessions created</span>
+                <strong id="metric-total">0</strong>
+              </div>
+            </article>
+            <article class="metric-card">
+              <span class="metric-icon blue">鉁?/span>
+              <div>
+                <span class="metric-label">Treatment delivered</span>
+                <strong id="metric-treated">0</strong>
+              </div>
+            </article>
+            <article class="metric-card">
+              <span class="metric-icon amber">鈻?/span>
+              <div>
+                <span class="metric-label">Completed surveys</span>
+                <strong id="metric-surveys">0</strong>
+              </div>
+            </article>
+            <article class="metric-card">
+              <span class="metric-icon purple">鈱?/span>
+              <div>
+                <span class="metric-label">Active configuration</span>
+                <strong id="metric-mode">Study</strong>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <div class="dashboard-grid">
+          <section id="configuration-panel" class="panel configuration-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Experiment settings</p>
+                <h2>Configure the interaction</h2>
+              </div>
+              <span id="save-indicator" class="save-indicator">Saved locally</span>
+            </div>
+
+            <form id="configuration-form">
+              <fieldset>
+                <legend>Conversation identity</legend>
+                <div class="form-row two-columns">
+                  <label>
+                    Coworker name
+                    <input id="coworker-name" name="coworkerName" maxlength="30" />
+                  </label>
+                  <label>
+                    Participant label
+                    <input
+                      id="participant-label"
+                      name="participantLabel"
+                      maxlength="30"
+                    />
+                  </label>
+                </div>
+                <label>
+                  Workplace scenario
+                  <textarea id="scenario-text" name="scenarioText" rows="3"></textarea>
+                </label>
+                <label>
+                  Opening message
+                  <textarea id="opening-message" name="openingMessage" rows="3"></textarea>
+                </label>
+              </fieldset>
+
+              <fieldset>
+                <legend>Target joke stage</legend>
+                <div class="form-row two-columns">
+                  <label>
+                    Trigger mode
+                    <select id="trigger-mode" name="triggerMode">
+                      <option value="study">Study 路 staged trigger</option>
+                      <option value="auto_demo">Exploratory 路 automatic demo</option>
+                    </select>
+                  </label>
+                  <label>
+                    Pre-joke participant turns
+                    <input
+                      id="pre-joke-turns"
+                      name="preJokeTurns"
+                      type="number"
+                      min="1"
+                      max="6"
+                    />
+                  </label>
+                </div>
+                <label>
+                  Standard joke invitation
+                  <textarea id="joke-cue" name="jokeCue" rows="2"></textarea>
+                </label>
+                <label>
+                  Participant task joke
+                  <textarea id="target-joke" name="targetJoke" rows="2"></textarea>
+                </label>
+              </fieldset>
+
+              <fieldset>
+                <legend>Condition reactions</legend>
+                <label class="condition-field negative-field">
+                  <span><b>Negative</b> 路 clear disapproval</span>
+                  <textarea id="negative-reaction" name="negativeReaction" rows="2"></textarea>
+                </label>
+                <label class="condition-field neutral-field">
+                  <span><b>Neutral</b> 路 no clear evaluation</span>
+                  <textarea id="neutral-reaction" name="neutralReaction" rows="2"></textarea>
+                </label>
+                <label class="condition-field positive-field">
+                  <span><b>Polite-positive</b> 路 courteous weak approval</span>
+                  <textarea
+                    id="positive-reaction"
+                    name="positiveReaction"
+                    rows="2"
+                  ></textarea>
+                </label>
+                <label>
+                  Canonical post-reaction text sent to the dialogue engine
+                  <textarea
+                    id="canonical-reaction"
+                    name="canonicalReaction"
+                    rows="2"
+                  ></textarea>
+                </label>
+                <div class="form-row two-columns">
+                  <label>
+                    Reaction delay (milliseconds)
+                    <input
+                      id="reaction-delay"
+                      name="reactionDelayMs"
+                      type="number"
+                      min="400"
+                      max="5000"
+                      step="100"
+                    />
+                  </label>
+                  <label>
+                    Post-joke turns before survey
+                    <input
+                      id="post-joke-turns"
+                      name="postJokeTurns"
+                      type="number"
+                      min="1"
+                      max="6"
+                    />
+                  </label>
+                </div>
+              </fieldset>
+
+              <div class="form-actions">
+                <button id="reset-config" class="button ghost-button" type="button">
+                  Reset defaults
+                </button>
+                <button class="button primary-button" type="submit">
+                  Save experiment settings
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <aside class="right-column">
+            <section class="panel session-builder">
+              <div class="panel-heading compact">
+                <div>
+                  <p class="eyebrow">New participant</p>
+                  <h2>Create a session</h2>
+                </div>
+              </div>
+              <label>
+                Condition assignment
+                <select id="condition-assignment">
+                  <option value="random">Balanced random assignment</option>
+                  <option value="negative">Negative</option>
+                  <option value="neutral">Neutral</option>
+                  <option value="polite_positive">Polite-positive</option>
+                </select>
+              </label>
+              <label>
+                Optional participant code
+                <input
+                  id="participant-code"
+                  maxlength="40"
+                  placeholder="e.g. P001"
+                />
+              </label>
+              <button id="create-session-side" class="button primary-button full" type="button">
+                Create participant session
+              </button>
+              <p class="helper-text">
+                The assigned condition is locked when the session is created and is
+                never shown in the participant interface.
+              </p>
+            </section>
+
+            <section class="panel control-checklist">
+              <div class="panel-heading compact">
+                <div>
+                  <p class="eyebrow">Control safeguards</p>
+                  <h2>Active controls</h2>
+                </div>
+              </div>
+              <ul>
+                <li><span>鉁?/span> One shared coworker persona</li>
+                <li><span>鉁?/span> Server-style fixed reaction slot</li>
+                <li><span>鉁?/span> Condition-blind joke audit</li>
+                <li><span>鉁?/span> Canonical post-reaction history</li>
+                <li><span>鉁?/span> One treatment delivery per session</li>
+              </ul>
+            </section>
+          </aside>
+        </div>
+
+        <section id="sessions-panel" class="panel sessions-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Participant sessions</p>
+              <h2>Session monitor</h2>
+            </div>
+            <button id="clear-sessions" class="text-button danger-text" type="button">
+              Clear all prototype data
+            </button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Session</th>
+                  <th>Participant</th>
+                  <th>Condition</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                  <th><span class="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody id="session-table-body"></tbody>
+            </table>
+            <div id="empty-sessions" class="empty-state">
+              <span>鈼?/span>
+              <h3>No sessions yet</h3>
+              <p>Create a session to generate a participant chat.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="data-panel" class="panel data-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Reproducibility</p>
+              <h2>Configuration and data export</h2>
+            </div>
+          </div>
+          <div class="export-grid">
+            <article>
+              <h3>Experiment configuration</h3>
+              <p>Export the current prompts and settings, or import a revised version.</p>
+              <div class="button-row">
+                <button id="export-config" class="button ghost-button" type="button">
+                  Export config
+                </button>
+                <label class="button ghost-button file-button">
+                  Import config
+                  <input id="import-config" type="file" accept="application/json" />
+                </label>
+              </div>
+            </article>
+            <article>
+              <h3>Anonymous experiment records</h3>
+              <p>Download session events and survey responses for analysis.</p>
+              <div class="button-row">
+                <button id="export-json" class="button ghost-button" type="button">
+                  Export JSON
+                </button>
+                <button id="export-csv" class="button ghost-button" type="button">
+                  Export CSV
+                </button>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <footer class="researcher-footer">
+          <span>WorkChat Lab prototype</span>
+          <span>GitHub Pages 路 No API keys stored</span>
+        </footer>
+      </main>
+    </div>
+
+    <div id="participant-view" class="participant-app hidden">
+      <div id="participant-error" class="participant-error hidden">
+        <div class="error-card">
+          <span>!</span>
+          <h1>Session unavailable</h1>
+          <p>This prototype session was not found in this browser.</p>
+          <a href="./?view=researcher" class="button primary-button">Open researcher console</a>
+        </div>
+      </div>
+
+      <section id="participant-intro" class="participant-intro hidden">
+        <div class="intro-card">
+          <div class="intro-avatar" id="intro-avatar">A</div>
+          <p class="eyebrow">Workplace communication study</p>
+          <h1>A short conversation with a coworker</h1>
+          <p id="participant-scenario"></p>
+          <div class="intro-details">
+            <span><b>Format</b> Text conversation</span>
+            <span><b>Length</b> About 3鈥? minutes</span>
+            <span><b>Privacy</b> Use no identifying information</span>
+          </div>
+          <div class="task-card">
+            <span class="task-label">Your task</span>
+            <p>
+              Respond naturally. When your coworker asks for a joke, send the joke
+              below:
+            </p>
+            <blockquote id="participant-target-joke"></blockquote>
+          </div>
+          <button id="start-conversation" class="button primary-button full" type="button">
+            Start conversation
+          </button>
+        </div>
+      </section>
+
+      <section id="chat-shell" class="chat-shell hidden" aria-label="Workplace chat">
+        <aside class="wechat-rail" aria-hidden="true">
+          <div class="self-avatar">P</div>
+          <button class="rail-icon active">鈼?/button>
+          <button class="rail-icon">鈻?/button>
+          <button class="rail-icon">鈽?/button>
+          <button class="rail-icon rail-bottom">鈽?/button>
+        </aside>
+
+        <aside class="conversation-list">
+          <div class="conversation-search">鈱?<span>Search</span></div>
+          <div class="conversation-item active">
+            <div class="contact-avatar coworker-avatar">A</div>
+            <div class="conversation-summary">
+              <strong class="coworker-name-text">Alex</strong>
+              <span id="conversation-preview">Workplace project chat</span>
+            </div>
+            <time id="conversation-time"></time>
+          </div>
+          <div class="conversation-placeholder">
+            <span>Only the assigned workplace conversation is available.</span>
+          </div>
+        </aside>
+
+        <main class="chat-panel">
+          <header class="chat-header">
+            <div>
+              <strong class="coworker-name-text">Alex</strong>
+              <span id="chat-status">Online</span>
+            </div>
+            <button id="end-conversation" class="chat-menu" type="button" title="End conversation">
+              路路路
+            </button>
+          </header>
+
+          <div id="message-list" class="message-list" aria-live="polite"></div>
+
+          <div id="typing-indicator" class="typing-row hidden" aria-label="Coworker is typing">
+            <div class="contact-avatar coworker-avatar small-avatar">A</div>
+            <div class="typing-bubble"><i></i><i></i><i></i></div>
+          </div>
+
+          <form id="message-form" class="message-composer">
+            <div class="composer-tools" aria-hidden="true">
+              <span>鈽?/span>
+              <span>鈻?/span>
+              <span>鈱?/span>
+            </div>
+            <textarea
+              id="message-input"
+              rows="3"
+              maxlength="1000"
+              placeholder="Type a message"
+              aria-label="Message"
+            ></textarea>
+            <div class="composer-footer">
+              <span>Enter to send 路 Shift+Enter for a new line</span>
+              <button id="send-button" class="send-button" type="submit">Send</button>
+            </div>
+          </form>
+        </main>
+      </section>
+    </div>
+
+    <div id="survey-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+      <form id="survey-form" class="survey-modal">
+        <div class="survey-progress"><span></span></div>
+        <p class="eyebrow">Post-conversation questions</p>
+        <h2>Tell us about the interaction</h2>
+        <p class="survey-intro">
+          Please answer based on your immediate impression of the coworker.
+        </p>
+
+        <fieldset>
+          <legend>Who do you think you were interacting with?</legend>
+          <div class="choice-grid">
+            <label><input type="radio" name="identityGuess" value="human" required /> Human</label>
+            <label><input type="radio" name="identityGuess" value="ai" /> AI chatbot</label>
+            <label><input type="radio" name="identityGuess" value="mixed" /> Human鈥揂I system</label>
+            <label><input type="radio" name="identityGuess" value="unsure" /> Not sure</label>
+          </div>
+        </fieldset>
+
+        <label class="range-label">
+          How likely is it that the coworker was AI?
+          <span><b>Definitely human</b><b>Definitely AI</b></span>
+          <input id="ai-likelihood" name="aiLikelihood" type="range" min="0" max="100" value="50" />
+          <output id="ai-likelihood-output">50</output>
+        </label>
+
+        <label>
+          What influenced your judgment?
+          <textarea name="identityReason" rows="2"></textarea>
+        </label>
+
+        <fieldset>
+          <legend>How did the coworker react to your joke?</legend>
+          <div class="likert-row">
+            <span>Very negative</span>
+            <div class="likert-options">
+              <label><input type="radio" name="reactionValence" value="1" required /><span>1</span></label>
+              <label><input type="radio" name="reactionValence" value="2" /><span>2</span></label>
+              <label><input type="radio" name="reactionValence" value="3" /><span>3</span></label>
+              <label><input type="radio" name="reactionValence" value="4" /><span>4</span></label>
+              <label><input type="radio" name="reactionValence" value="5" /><span>5</span></label>
+              <label><input type="radio" name="reactionValence" value="6" /><span>6</span></label>
+              <label><input type="radio" name="reactionValence" value="7" /><span>7</span></label>
+            </div>
+            <span>Very positive</span>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>The coworker disapproved of the joke.</legend>
+          <div class="likert-row">
+            <span>Strongly disagree</span>
+            <div class="likert-options">
+              <label><input type="radio" name="disapproval" value="1" required /><span>1</span></label>
+              <label><input type="radio" name="disapproval" value="2" /><span>2</span></label>
+              <label><input type="radio" name="disapproval" value="3" /><span>3</span></label>
+              <label><input type="radio" name="disapproval" value="4" /><span>4</span></label>
+              <label><input type="radio" name="disapproval" value="5" /><span>5</span></label>
+              <label><input type="radio" name="disapproval" value="6" /><span>6</span></label>
+              <label><input type="radio" name="disapproval" value="7" /><span>7</span></label>
+            </div>
+            <span>Strongly agree</span>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>The coworker鈥檚 response felt natural.</legend>
+          <div class="likert-row">
+            <span>Strongly disagree</span>
+            <div class="likert-options">
+              <label><input type="radio" name="naturalness" value="1" required /><span>1</span></label>
+              <label><input type="radio" name="naturalness" value="2" /><span>2</span></label>
+              <label><input type="radio" name="naturalness" value="3" /><span>3</span></label>
+              <label><input type="radio" name="naturalness" value="4" /><span>4</span></label>
+              <label><input type="radio" name="naturalness" value="5" /><span>5</span></label>
+              <label><input type="radio" name="naturalness" value="6" /><span>6</span></label>
+              <label><input type="radio" name="naturalness" value="7" /><span>7</span></label>
+            </div>
+            <span>Strongly agree</span>
+          </div>
+        </fieldset>
+
+        <button class="button primary-button full" type="submit">Submit responses</button>
+      </form>
+    </div>
+
+    <div id="debrief-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+      <div class="debrief-modal">
+        <span class="debrief-icon">鉁?/span>
+        <p class="eyebrow">Study complete</p>
+        <h2>Thank you for taking part</h2>
+        <p>
+          This was a prototype scenario experiment. The coworker was a computer
+          chatbot, and its immediate reaction to the joke was controlled by one of
+          three experimental conditions: negative, neutral, or polite-positive.
+        </p>
+        <p>
+          The temporary concealment was necessary to measure natural impressions.
+          No identifying information is required by this prototype.
+        </p>
+        <button id="close-debrief" class="button primary-button full" type="button">
+          Finish
+        </button>
+      </div>
+    </div>
+
+    <div id="toast" class="toast hidden" role="status"></div>
+
+    <script type="module" src="./js/app.js"></script>
+  </body>
+</html>
