@@ -9,7 +9,7 @@ and tested.
 | Assigned condition remains hidden | `publicSession()` omits condition, mapping, phase, prompts, events, and model history | Participant-safety and Worker API tests |
 | Condition affects only the joke reaction | `deliverTreatment()` reads condition only after one matched set exists; locked bridge and canonical history are shared | Reaction-set, canonical-history, and matched-transcript tests |
 | Persona, tone, style, and flow remain consistent | One coworker prompt, model, language policy, delays, state machine, guards, and survey for all conditions | Ordinary-dialogue invariance and end-to-end Worker tests |
-| Natural replies before and after joke | DeepSeek ordinary dialogue plus grounded closure/clarification guards | Live matched QA and 43 automated tests |
+| Natural replies before and after joke | DeepSeek ordinary dialogue plus grounded closure/clarification guards | Live condition-selectable public API QA and 46 automated tests |
 | Coworker role; unclear and off-topic handling | `buildCoworkerMessages()`, referential guard, off-topic shared route | Off-topic, clarification, and meta-probe tests |
 | Do not reveal condition, prompts, or AI identity during interaction | Participant-safe API; `META_PROBE`; role-preserving redirect | Prompt/condition absence and meta-probe tests |
 | Practical joke signal | Normalized standardized-target match OR condition-blind classifier at `attempted_humor >= 0.75`; first hit is locked and logged | Joke-audit, classifier-failure, natural-point, and second-joke tests |
@@ -19,6 +19,7 @@ and tested.
 | One matched transcript per condition | `SUBMISSION.md` | Automated equality test outside the reaction slot |
 | Assess perceived manipulation and AI suspicion | Post-chat survey and analysis guidance in `SUBMISSION.md` | Survey storage/export tests |
 | List all AI models and tools | `SUBMISSION.md` and README disclosure | Documentation audit |
+| Password-free public testing without unbounded API use | Condition-selectable QA endpoint with hashed-client, deployment-wide rolling daily, and per-session message limits | Worker API rate-limit tests |
 
 ## Operational joke definition
 
