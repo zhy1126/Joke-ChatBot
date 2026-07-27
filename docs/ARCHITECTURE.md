@@ -26,15 +26,17 @@ canonical conversation, then generates a matched counterfactual set containing:
 
 - a short negative prefix;
 - a short neutral prefix;
-- a short polite-positive prefix; and
-- one context-specific, condition-neutral work follow-up.
+- a short polite-positive prefix.
 
 The reaction prompt generates all three candidates together and does not receive
 the assigned condition. The server validates valence, weak-versus-strong
-positivity, neutral contamination, shared-follow-up neutrality, and approximate
-length balance. Only after validation does the server read the condition and
-select one candidate. Fixed researcher-editable templates are emergency
-fallbacks, not the normal response path.
+positivity, neutral contamination, and approximate length balance. A
+condition-blind state rule then selects one locked neutral bridge: either a
+generic return to the work at hand or a brief closure when the participant has
+already closed the task. The same bridge is appended verbatim to every prefix.
+Only after this matched set exists does the server read the condition and
+select one candidate. Researcher-editable templates supply prefix wording only
+when generation or validation fails.
 
 Every nonmanipulated component is shared:
 
@@ -49,10 +51,13 @@ Every nonmanipulated component is shared:
 - error handling.
 
 Participant-visible history stores the selected contextual reaction. DeepSeek
-history stores only the dynamically generated shared follow-up, which is
-identical across the three counterfactual candidates for that session. This
-prevents the manipulation prefix from causing systematically colder or warmer
-later messages.
+history stores only the locked shared bridge. When older stored sessions are
+loaded, any condition-reaction turn is canonicalized to the current shared
+bridge before the next model call. This prevents the manipulation prefix from
+causing systematically colder or warmer later messages. High-confidence
+referential clarifications and explicit task closures use narrow,
+condition-blind shared guards, avoiding unsupported details and LLM sampling
+differences in these experimentally important transitions.
 
 ## Assignment
 
@@ -99,3 +104,4 @@ reply path and the technical event is logged.
 Open-humor mode is useful for exploratory demonstrations. Confirmatory studies
 should retain one pretested standardized joke so joke content, offensiveness,
 length, and cultural familiarity do not become additional manipulations.
+
