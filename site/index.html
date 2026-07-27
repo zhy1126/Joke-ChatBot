@@ -484,16 +484,103 @@
       <section class="evaluator-notice" role="note">
         <strong>No password or account is required.</strong>
         <span>
-          This browser-local QA sandbox is excluded from research data and
-          exposes no API key. The submitted prototype's live participant flow
-          uses the secured DeepSeek backend.
+          Live tests use the secured DeepSeek backend and are flagged as QA,
+          not formal research data. API keys, researcher access, prompts, and
+          admin records remain unavailable to this page. For cost control,
+          each network client can create three tests per rolling 24 hours.
         </span>
+      </section>
+
+      <section class="evaluator-controls live-evaluator-controls" aria-labelledby="live-evaluator-title">
+        <div class="live-evaluator-heading">
+          <div>
+            <p class="eyebrow">Live DeepSeek API test</p>
+            <h2 id="live-evaluator-title">Choose one condition and start a real AI conversation</h2>
+          </div>
+          <span id="live-evaluator-status" class="live-evaluator-status">
+            Ready
+          </span>
+        </div>
+
+        <div class="live-evaluator-setup">
+          <label>
+            Condition to test
+            <select id="live-evaluator-condition">
+              <option value="negative">Negative</option>
+              <option value="neutral">Neutral</option>
+              <option value="polite_positive">Polite-positive</option>
+            </select>
+          </label>
+          <label>
+            Conversation language
+            <select id="live-evaluator-language">
+              <option value="en">English</option>
+              <option value="zh-CN">简体中文</option>
+            </select>
+          </label>
+          <button id="live-evaluator-start" class="button primary-button" type="button">
+            Start new API test
+          </button>
+        </div>
+
+        <div id="live-evaluator-meta" class="live-evaluator-meta">
+          Select a condition, then create a fresh condition-locked QA session.
+        </div>
+
+        <div class="live-evaluator-workspace">
+          <div id="live-evaluator-chat" class="live-evaluator-chat" aria-live="polite">
+            <div class="live-evaluator-empty">
+              The API conversation will appear here.
+            </div>
+          </div>
+          <div>
+            <div class="evaluator-presets" aria-label="Suggested live API messages">
+              <button type="button" data-live-preset="work">
+                Work update
+              </button>
+              <button type="button" data-live-preset="progress">
+                Progress
+              </button>
+              <button type="button" data-live-preset="joke">
+                Prepared joke
+              </button>
+              <button type="button" data-live-preset="closure">
+                Close task
+              </button>
+            </div>
+            <form id="live-evaluator-form" class="evaluator-form">
+              <label for="live-evaluator-input">Participant message</label>
+              <div>
+                <textarea
+                  id="live-evaluator-input"
+                  rows="3"
+                  maxlength="1000"
+                  placeholder="Start a live API test first..."
+                  disabled
+                ></textarea>
+                <button
+                  id="live-evaluator-send"
+                  class="button primary-button"
+                  type="submit"
+                  disabled
+                >
+                  Send to DeepSeek
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       </section>
 
       <section class="evaluator-controls" aria-labelledby="evaluator-controls-title">
         <div>
-          <p class="eyebrow">Matched-input test</p>
-          <h2 id="evaluator-controls-title">Send the same message to every condition</h2>
+          <p class="eyebrow">Local matched-control comparison</p>
+          <h2 id="evaluator-controls-title">Compare the deterministic fallback across all conditions</h2>
+          <p class="evaluator-section-copy">
+            This secondary browser-local panel makes experimental control easy
+            to inspect. Use the live panel above when testing real DeepSeek
+            generation.
+          </p>
         </div>
         <div class="evaluator-presets" aria-label="Suggested test messages">
           <button type="button" data-evaluator-preset="work">
