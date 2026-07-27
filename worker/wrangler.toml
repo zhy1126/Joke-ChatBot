@@ -10,8 +10,8 @@ DEEPSEEK_MODEL = "deepseek-v4-flash"
 DEEPSEEK_TIMEOUT_MS = "20000"
 MAX_SESSION_MESSAGES = "24"
 
-# Wrangler 4.45+ automatically provisions this D1 resource on first deploy.
-# The binding name is also used by the migration command.
+# `npm run worker:deploy` resolves or creates jokechatbot-db and writes its UUID
+# into the ignored worker/wrangler.deploy.toml file before deployment.
 [[d1_databases]]
 binding = "DB"
 migrations_dir = "migrations"
