@@ -17,14 +17,16 @@ condition. Participants choose English or Simplified Chinese before starting;
 the same language rule applies in every condition. The chatbot handles unclear,
 off-topic, and meta-level messages with shared instructions or redirects.
 
-In confirmatory study mode, the system opens a `joke_window` after a fixed number
-of common dialogue turns and the same joke invitation. A condition-blind
-DeepSeek classifier labels the participant message as attempted humor, refusal,
-clarification, or other. It identifies an attempt to tell a joke rather than
-judging whether the joke is objectively funny. Refusals and clarification
-requests keep the window open; the next substantive response is treated as the
-target joke message. This staged signal is more reproducible across languages
-than relying on an unrestricted humor detector.
+The coworker never asks for a joke. Before the chat, every participant is
+instructed to introduce the same pretested joke after at least one work-related
+exchange, at a moment that feels natural. While treatment is undelivered, every
+participant message is checked by a condition-blind normalized target matcher
+and DeepSeek classifier. The classifier labels attempted humor, refusal,
+clarification, or other; it identifies an attempt rather than judging whether
+the joke is objectively funny. Ordinary, unclear, and off-topic messages remain
+on the shared coworker path. Only the first confirmed joke opens the one-time
+reaction slot. Exact target matching provides a reproducible fallback if the
+classifier is unavailable.
 
 Only the immediate reaction is manipulated. At the joke slot, DeepSeek uses the
 same preceding context and participant language to generate three matched
@@ -51,7 +53,7 @@ The participant messages are identical in all three examples.
 **Participant:** The figures are checked, and I’m finishing the appendix.  
 **Alex:** Thanks. I’ll review the headings while you finish that.  
 **Participant:** The appendix is ready now.  
-**Alex:** We’ve been looking at this report for a while. You mentioned you had a quick joke—go on.  
+**Alex:** Good. I’ll check the headings while you take one last look at the totals.  
 **Participant:** Why did the spreadsheet break up with the database? It had too many relationship problems.  
 **Alex:** That’s not really suitable for work. Could you double-check the appendix totals while I finish the summary?
 
@@ -61,7 +63,7 @@ The participant messages are identical in all three examples.
 **Participant:** The figures are checked, and I’m finishing the appendix.  
 **Alex:** Thanks. I’ll review the headings while you finish that.  
 **Participant:** The appendix is ready now.  
-**Alex:** We’ve been looking at this report for a while. You mentioned you had a quick joke—go on.  
+**Alex:** Good. I’ll check the headings while you take one last look at the totals.  
 **Participant:** Why did the spreadsheet break up with the database? It had too many relationship problems.  
 **Alex:** ... Could you double-check the appendix totals while I finish the summary?
 
@@ -71,7 +73,7 @@ The participant messages are identical in all three examples.
 **Participant:** The figures are checked, and I’m finishing the appendix.  
 **Alex:** Thanks. I’ll review the headings while you finish that.  
 **Participant:** The appendix is ready now.  
-**Alex:** We’ve been looking at this report for a while. You mentioned you had a quick joke—go on.  
+**Alex:** Good. I’ll check the headings while you take one last look at the totals.  
 **Participant:** Why did the spreadsheet break up with the database? It had too many relationship problems.  
 **Alex:** Heh... Could you double-check the appendix totals while I finish the summary?
 
