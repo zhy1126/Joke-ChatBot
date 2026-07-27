@@ -12,6 +12,7 @@ import {
   processParticipantMessage,
   publicSession,
   resolveBlindChoice,
+  sharedReactionFollowup,
   startServerSession,
   validateReactionSet,
 } from "../worker/src/experiment.js";
@@ -118,11 +119,11 @@ test("reaction prompt creates all counterfactual conditions from one shared cont
   assert.match(prompt, /negative_prefix/);
   assert.match(prompt, /neutral_prefix/);
   assert.match(prompt, /polite_positive_prefix/);
-  assert.match(prompt, /shared_followup/);
+  assert.doesNotMatch(prompt, /"shared_followup"/);
   assert.match(prompt, /下午|会议/);
   assert.match(prompt, /matched counterfactuals/);
   assert.match(prompt, /not told which one will be displayed/);
-  assert.match(prompt, /same shared_followup will be appended verbatim/);
+  assert.match(prompt, /locked condition-neutral bridge verbatim/);
   assert.match(prompt, /Do not repeat or explain the joke/);
   assert.doesNotMatch(prompt, /"condition":"negative"/);
 });
@@ -256,7 +257,7 @@ test("condition-blind detector ignores ordinary and refusal messages before trea
     },
   );
   assert.equal(treatment.session.jokeSeen, true);
-  assert.equal(treatment.reply, DEFAULT_CONFIG.neutralReactionZh);
+  assert.equal(treatment.reply, "……那我们先这样，稍后再聊。");
 });
 
 test("standardized target still triggers when the classifier is unavailable", async () => {
@@ -276,7 +277,10 @@ test("standardized target still triggers when the classifier is unavailable", as
       generateReply: async () => "unused",
     },
   );
-  assert.equal(result.reply, DEFAULT_CONFIG.negativeReaction);
+  assert.equal(
+    result.reply,
+    "That’s not really appropriate for work. Let’s get back to the work at hand.",
+  );
   assert.equal(result.session.jokeSeen, true);
   assert.equal(
     result.session.events.some(
@@ -319,11 +323,11 @@ test("assigned condition selects one AI-generated contextual candidate", async (
   );
   assert.equal(
     result.reply,
-    "哈哈……我们接着检查附录中的数字吧。",
+    "哈哈……我们先回到手头的工作吧。",
   );
   assert.equal(
     result.session.modelHistory.at(-1).text,
-    "我们接着检查附录中的数字吧。",
+    "我们先回到手头的工作吧。",
   );
   const generatedEvent = result.session.events.find(
     (event) => event.type === "contextual_reaction_set_generated",
@@ -337,11 +341,8 @@ test("assigned condition selects one AI-generated contextual candidate", async (
 
 test("visible condition reactions collapse to the same canonical model history", async () => {
   const histories = [];
-  for (const [card, expected] of [
-    ["A", DEFAULT_CONFIG.negativeReactionZh],
-    ["B", DEFAULT_CONFIG.neutralReactionZh],
-    ["C", DEFAULT_CONFIG.positiveReactionZh],
-  ]) {
+  const visibleReplies = [];
+  for (const card of ["A", "B", "C"]) {
     let session = startServerSession(
       resolveBlindChoice(makeBlindSession(), card, CLOCK),
       "zh-CN",
@@ -355,11 +356,66 @@ test("visible condition reactions collapse to the same canonical model history",
       }),
       generateReply: async () => "unused",
     });
-    assert.equal(result.reply, expected);
+    visibleReplies.push(result.reply);
     histories.push(result.session.modelHistory.at(-1).text);
   }
+  assert.equal(new Set(visibleReplies).size, 3);
   assert.equal(new Set(histories).size, 1);
-  assert.equal(histories[0], DEFAULT_CONFIG.canonicalReactionZh);
+  assert.equal(histories[0], "我们先回到手头的工作吧。");
+});
+
+test("explicit task closure locks one grounded bridge across reaction conditions", async () => {
+  const bridges = [];
+  const replies = [];
+  for (const card of ["A", "B", "C"]) {
+    let session = startServerSession(
+      resolveBlindChoice(makeBlindSession(), card, CLOCK),
+      "zh-CN",
+      CLOCK,
+    );
+    session = (
+      await processParticipantMessage(
+        session,
+        "标题改好了，目前没有别的项目需要处理，先这样即可。",
+        {
+          now: CLOCK,
+          classifyJoke: async () => ({ label: "other", confidence: 0.99 }),
+          generateReply: async () => "好的，那就先这样。",
+        },
+      )
+    ).session;
+    assert.equal(
+      sharedReactionFollowup(session),
+      "那我们先这样，稍后再聊。",
+    );
+    const result = await processParticipantMessage(
+      session,
+      DEFAULT_CONFIG.targetJokeZh,
+      {
+        now: CLOCK,
+        classifyJoke: async () => ({
+          label: "attempted_humor",
+          confidence: 0.99,
+        }),
+        generateReply: async () => "unused",
+        generateReactionSet: async () => ({
+          negative_prefix: "这个笑话不太适合工作场合。",
+          neutral_prefix: "……",
+          polite_positive_prefix: "呵呵，有点意思。",
+          shared_followup: "这条模型生成内容必须被忽略。",
+        }),
+      },
+    );
+    replies.push(result.reply);
+    bridges.push(result.session.modelHistory.at(-1).text);
+  }
+  assert.equal(new Set(replies).size, 3);
+  assert.equal(new Set(bridges).size, 1);
+  assert.equal(bridges[0], "那我们先这样，稍后再聊。");
+  assert.equal(
+    replies.every((reply) => reply.endsWith("那我们先这样，稍后再聊。")),
+    true,
+  );
 });
 
 function makeBlindSession() {
