@@ -16,6 +16,8 @@ The model receives one shared coworker prompt and does not receive the
 condition. Participants choose English or Simplified Chinese before starting;
 the same language rule applies in every condition. The chatbot handles unclear,
 off-topic, and meta-level messages with shared instructions or redirects.
+Narrow condition-blind guards handle referential clarification and explicit
+task closure without guessing or adding new work.
 
 The coworker never asks for a joke. Before the chat, every participant is
 instructed to introduce the same pretested joke after at least one work-related
@@ -31,13 +33,14 @@ classifier is unavailable.
 Only the immediate reaction is manipulated. At the joke slot, DeepSeek uses the
 same preceding context and participant language to generate three matched
 counterfactual prefixes—clear disapproval, no evaluation, and weak courteous
-approval—plus one shared, context-specific return-to-work sentence. The server
-validates valence, strength, length balance, and follow-up neutrality, then
-reveals only the assigned candidate. Fixed templates are used only if generation
-or validation fails. Persona, model, timing, conversation stages, survey, and
-error handling remain shared. Participant history contains the selected
-reaction; model history retains only the common dynamic follow-up, preventing
-the manipulation prefix from changing later generated tone.
+approval. The server validates valence, strength, and length balance, then
+appends one locked condition-neutral bridge derived from shared task state.
+Only after the matched set exists does it read the condition and reveal one
+candidate. Researcher-configured prefixes are used only if generation or
+validation fails. Persona, timing, stages, survey, and error handling remain
+shared. Participant history contains the selected reaction; model history
+retains only the common bridge, preventing later tone from inheriting the
+manipulation.
 
 The GitHub Pages frontend contains no provider credentials. A Cloudflare Worker
 stores the DeepSeek key as an encrypted secret, while D1 stores condition
@@ -50,32 +53,38 @@ The participant messages are identical in all three examples.
 ### Negative
 
 **Alex:** Morning. I’m reviewing the client summary. How is your section going?  
-**Participant:** The figures are checked, and I’m finishing the appendix.  
-**Alex:** Thanks. I’ll review the headings while you finish that.  
-**Participant:** The appendix is ready now.  
-**Alex:** Good. I’ll check the headings while you take one last look at the totals.  
+**Participant:** The March heading is inconsistent. I’ll change it to “March 2026.”  
+**Alex:** Okay—change that heading to “March 2026,” and let me know when it is done.  
+**Participant:** The March heading is changed now.  
+**Alex:** Got it. That heading is sorted.  
 **Participant:** Why did the spreadsheet break up with the database? It had too many relationship problems.  
-**Alex:** That’s not really suitable for work. Could you double-check the appendix totals while I finish the summary?
+**Alex:** That’s not really suitable for work. Let’s get back to the work at hand.
+**Participant:** Everything is done now. There is nothing else to handle.  
+**Alex:** Okay, understood. Let’s leave it there for now.
 
 ### Neutral
 
 **Alex:** Morning. I’m reviewing the client summary. How is your section going?  
-**Participant:** The figures are checked, and I’m finishing the appendix.  
-**Alex:** Thanks. I’ll review the headings while you finish that.  
-**Participant:** The appendix is ready now.  
-**Alex:** Good. I’ll check the headings while you take one last look at the totals.  
+**Participant:** The March heading is inconsistent. I’ll change it to “March 2026.”  
+**Alex:** Okay—change that heading to “March 2026,” and let me know when it is done.  
+**Participant:** The March heading is changed now.  
+**Alex:** Got it. That heading is sorted.  
 **Participant:** Why did the spreadsheet break up with the database? It had too many relationship problems.  
-**Alex:** ... Could you double-check the appendix totals while I finish the summary?
+**Alex:** ... Let’s get back to the work at hand.
+**Participant:** Everything is done now. There is nothing else to handle.  
+**Alex:** Okay, understood. Let’s leave it there for now.
 
 ### Polite-positive
 
 **Alex:** Morning. I’m reviewing the client summary. How is your section going?  
-**Participant:** The figures are checked, and I’m finishing the appendix.  
-**Alex:** Thanks. I’ll review the headings while you finish that.  
-**Participant:** The appendix is ready now.  
-**Alex:** Good. I’ll check the headings while you take one last look at the totals.  
+**Participant:** The March heading is inconsistent. I’ll change it to “March 2026.”  
+**Alex:** Okay—change that heading to “March 2026,” and let me know when it is done.  
+**Participant:** The March heading is changed now.  
+**Alex:** Got it. That heading is sorted.  
 **Participant:** Why did the spreadsheet break up with the database? It had too many relationship problems.  
-**Alex:** Heh... Could you double-check the appendix totals while I finish the summary?
+**Alex:** Heh... Let’s get back to the work at hand.
+**Participant:** Everything is done now. There is nothing else to handle.  
+**Alex:** Okay, understood. Let’s leave it there for now.
 
 ## Manipulation and AI-suspicion assessment
 
@@ -92,12 +101,14 @@ reasons. A debrief follows data submission.
 
 ## AI models and AI-assisted tools
 
-- **OpenAI Codex:** requirements translation and analysis, multi-agent
-  experimental-design review, implementation, tests, security review, and
-  documentation.
+- **OpenAI GPT-5 through Codex:** requirements translation and analysis,
+  multi-agent and autoresearch review, implementation, test generation,
+  security review, deployment assistance, and documentation.
 - **DeepSeek V4 Flash (`deepseek-v4-flash`):** configured runtime model for
   ordinary bilingual coworker replies and condition-blind structured joke
-  auditing. It never receives the assigned condition.
+  auditing, and matched reaction-prefix generation. It never receives the
+  assigned condition.
 - **Playwright with Microsoft Edge:** automated local browser smoke testing of
   the researcher interface and remote participant flow. It is a testing tool,
   not a generative model.
+
