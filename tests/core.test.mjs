@@ -41,6 +41,19 @@ test("a created session locks a valid condition and snapshots configuration", ()
   assert.equal(session.status, "created");
 });
 
+test("QA sessions are explicitly flagged and remain participant-safe", () => {
+  const session = createSession({
+    condition: "negative",
+    participantCode: "QA-negative",
+    sessionPurpose: "qa",
+    config: DEFAULT_CONFIG,
+    now: CLOCK,
+    id: "S-QA-NEG",
+  });
+  assert.equal(session.sessionPurpose, "qa");
+  assert.equal("sessionPurpose" in publicSessionView(session), false);
+});
+
 test("participant-safe session view does not expose condition or prompts", () => {
   const session = createSession({
     condition: "negative",
@@ -54,7 +67,7 @@ test("participant-safe session view does not expose condition or prompts", () =>
   assert.equal("modelHistory" in publicView, false);
 });
 
-test("all conditions produce identical pre-joke dialogue and joke cue", () => {
+test("all conditions produce identical ordinary dialogue without a joke invitation", () => {
   const traces = CONDITIONS.map((condition) => {
     let session = startSession(
       createSession({
@@ -79,11 +92,15 @@ test("all conditions produce identical pre-joke dialogue and joke cue", () => {
   });
   assert.deepEqual(traces[0], traces[1]);
   assert.deepEqual(traces[1], traces[2]);
+  assert.equal(
+    traces.flat().some((message) => message.kind === "joke_invitation"),
+    false,
+  );
 });
 
 test("the target joke triggers exactly one fixed condition reaction", () => {
   for (const condition of CONDITIONS) {
-    let session = advanceToJokeWindow(condition);
+    let session = advanceToNaturalJokePoint(condition);
     const first = submitParticipantMessage(
       session,
       DEFAULT_CONFIG.targetJoke,
@@ -114,7 +131,7 @@ test("the target joke triggers exactly one fixed condition reaction", () => {
 
 test("condition-specific display replies become identical model histories", () => {
   const histories = CONDITIONS.map((condition) => {
-    let session = advanceToJokeWindow(condition);
+    let session = advanceToNaturalJokePoint(condition);
     session = submitParticipantMessage(
       session,
       DEFAULT_CONFIG.targetJoke,
@@ -185,7 +202,7 @@ test("survey completion stores bounded values and completes the session", () => 
   assert.equal(completed.survey.naturalness, 6);
 });
 
-function advanceToJokeWindow(condition) {
+function advanceToNaturalJokePoint(condition) {
   let session = startSession(
     createSession({
       condition,
@@ -200,11 +217,10 @@ function advanceToJokeWindow(condition) {
     "The March figures look correct.",
     CLOCK,
   ).session;
-  session = submitParticipantMessage(
-    session,
-    "I can check the appendix next.",
-    CLOCK,
-  ).session;
-  assert.equal(session.phase, "joke_window");
+  assert.equal(session.phase, "monitoring_joke");
+  assert.equal(
+    session.messages.some((message) => message.kind === "joke_invitation"),
+    false,
+  );
   return session;
 }
