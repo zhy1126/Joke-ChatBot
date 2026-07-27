@@ -203,7 +203,10 @@ async function createAdminSession(env, body) {
     condition = body.condition;
   } else if (assignmentMethod === "balanced_random") {
     const existing = await listSessions(env);
-    condition = chooseBalancedCondition(existing, secureRandom);
+    condition = chooseBalancedCondition(
+      existing.filter((session) => session.sessionPurpose !== "qa"),
+      secureRandom,
+    );
   } else if (assignmentMethod === "participant_blind") {
     hiddenMapping = createHiddenMapping(secureRandom);
   } else {
@@ -214,6 +217,7 @@ async function createAdminSession(env, body) {
     id: `S-${randomToken(8).toUpperCase()}`,
     participantToken: randomToken(36),
     participantCode: body.participantCode,
+    sessionPurpose: body.sessionPurpose,
     assignmentMethod,
     condition,
     hiddenMapping,
@@ -395,6 +399,7 @@ function adminSessionView(session) {
     id: session.id,
     participantToken: session.participantToken,
     participantCode: session.participantCode,
+    sessionPurpose: session.sessionPurpose || "research",
     assignmentMethod: session.assignmentMethod,
     condition: session.condition,
     selectedCard: session.selectedCard,
