@@ -1,4 +1,5 @@
 import {
+  CONDITIONS,
   DEFAULT_CONFIG,
   clone,
   conditionLabel,
@@ -157,6 +158,23 @@ function bindResearcherEvents(api, settings) {
 
 async function createResearchSession(api, settings) {
   const selected = byId("condition-assignment").value;
+  const participantCode = byId("participant-code").value.trim();
+  if (selected === "qa_triplet") {
+    const config = readConfig();
+    for (const condition of CONDITIONS) {
+      await api.createSession({
+        assignmentMethod: "researcher_manual",
+        condition,
+        sessionPurpose: "qa",
+        participantCode: `${participantCode || "QA"}-${condition}`,
+        config,
+      });
+    }
+    byId("participant-code").value = "";
+    await refreshResearcher(api, settings);
+    toast("QA test pack created: one independent session per condition.");
+    return;
+  }
   const manual = ["negative", "neutral", "polite_positive"].includes(selected);
   const assignmentMethod =
     selected === "participant_blind"
@@ -167,7 +185,8 @@ async function createResearchSession(api, settings) {
   const payload = await api.createSession({
     assignmentMethod,
     condition: manual ? selected : undefined,
-    participantCode: byId("participant-code").value.trim(),
+    sessionPurpose: "research",
+    participantCode,
     config: readConfig(),
   });
   byId("participant-code").value = "";
@@ -211,7 +230,7 @@ function renderSessions(sessions, settings) {
       ? conditionLabel(session.condition)
       : "Awaiting blind choice";
     row.innerHTML = `
-      <td><b>${escapeHtml(session.id)}</b><small>${escapeHtml(session.assignmentMethod)}</small></td>
+      <td><b>${escapeHtml(session.id)}</b><small>${escapeHtml(session.assignmentMethod)}${session.sessionPurpose === "qa" ? " · QA test" : ""}</small></td>
       <td>${escapeHtml(session.participantCode || "—")}</td>
       <td><span class="condition-badge ${escapeHtml(session.condition || "pending")}">${escapeHtml(condition)}</span></td>
       <td><span class="status-badge">${escapeHtml(displayStatus(session.status))}</span></td>
@@ -231,12 +250,15 @@ function renderSessions(sessions, settings) {
 }
 
 function renderMetrics(sessions) {
-  byId("metric-total").textContent = String(sessions.length);
+  const researchSessions = sessions.filter(
+    (session) => session.sessionPurpose !== "qa",
+  );
+  byId("metric-total").textContent = String(researchSessions.length);
   byId("metric-treated").textContent = String(
-    sessions.filter((session) => session.jokeSeen).length,
+    researchSessions.filter((session) => session.jokeSeen).length,
   );
   byId("metric-surveys").textContent = String(
-    sessions.filter((session) => session.survey).length,
+    researchSessions.filter((session) => session.survey).length,
   );
   byId("metric-mode").textContent =
     readConfig().triggerMode === "study" ? "Study" : "Auto demo";
@@ -445,6 +467,10 @@ function applyParticipantLanguage(locale) {
   byId("blind-choice-copy").textContent = chinese
     ? "这些入口外观相同，仅用于建立本次会话。选择后不能更改。"
     : "The identical entries are only used to establish this conversation. Your choice cannot be changed.";
+  byId("participant-task-label").textContent = chinese ? "你的任务" : "Your task";
+  byId("participant-task-copy").textContent = chinese
+    ? "请自然回应。至少进行一次与工作相关的交流后，在你觉得合适的时机讲出下面准备好的笑话。不要等待同事主动询问。"
+    : "Respond naturally. After at least one work-related exchange, introduce the prepared joke below when it feels natural. Do not wait for your coworker to ask for it.";
   byId("start-conversation").textContent = chinese
     ? "开始对话"
     : "Start conversation";
@@ -614,6 +640,7 @@ function sessionSummary(session) {
   return {
     session_id: session.id,
     participant_code: session.participantCode,
+    session_purpose: session.sessionPurpose || "research",
     assignment_method: session.assignmentMethod,
     selected_card: session.selectedCard || "",
     condition: session.condition || "",
