@@ -137,6 +137,14 @@ test("Worker provides a secure Chinese blind-choice conversation flow", async ()
       ),
       true,
     );
+    const ordinaryDialogueCalls = deepSeekPayloads.filter((payload) =>
+      payload.messages?.[0]?.content?.includes("human coworker"),
+    );
+    assert.equal(ordinaryDialogueCalls.length >= 2, true);
+    assert.equal(
+      ordinaryDialogueCalls.every((payload) => payload.temperature === 0),
+      true,
+    );
     const serializedModelCalls = JSON.stringify(deepSeekPayloads);
     assert.equal(
       serializedModelCalls.includes(DEFAULT_CONFIG.negativeReactionZh),
