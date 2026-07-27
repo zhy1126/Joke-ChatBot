@@ -102,9 +102,8 @@
               Worker API URL
               <input
                 id="backend-api-url"
-                inputmode="url"
-                autocomplete="url"
-                placeholder="https://joke-chatbot-api.example.workers.dev"
+                readonly
+                placeholder="Set by site/js/runtime-config.js"
               />
             </label>
             <label>
@@ -121,8 +120,9 @@
             </button>
           </form>
           <p class="helper-text">
-            The DeepSeek API key belongs only in the Worker Secret. Never enter it
-            here or commit it to GitHub.
+            The Worker URL is fixed by the published site configuration. The
+            DeepSeek API key belongs only in the Worker Secret—never enter it here
+            or commit it to GitHub.
           </p>
         </section>
 
