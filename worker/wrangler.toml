@@ -1,0 +1,18 @@
+name = "joke-chatbot-api"
+main = "src/index.js"
+compatibility_date = "2026-07-27"
+workers_dev = true
+
+[vars]
+ALLOWED_ORIGINS = "https://zhy1126.github.io,http://localhost:8000,http://127.0.0.1:8000"
+DEEPSEEK_BASE_URL = "https://api.deepseek.com"
+DEEPSEEK_MODEL = "deepseek-v4-flash"
+DEEPSEEK_TIMEOUT_MS = "20000"
+MAX_SESSION_MESSAGES = "24"
+
+# Run `npx wrangler d1 create joke-chatbot` and replace this placeholder.
+[[d1_databases]]
+binding = "DB"
+database_name = "joke-chatbot"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "migrations"
