@@ -1,0 +1,15 @@
+{
+  "name": "WorkChat Lab",
+  "short_name": "WorkChat",
+  "start_url": "./?view=researcher",
+  "display": "standalone",
+  "background_color": "#f3f5f7",
+  "theme_color": "#07c160",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
