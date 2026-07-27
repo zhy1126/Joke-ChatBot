@@ -44,6 +44,7 @@ test("participant-safe view never exposes condition, mapping, reactions, or mode
   assert.equal("hiddenMapping" in safe, false);
   assert.equal("config" in safe, false);
   assert.equal("modelHistory" in safe, false);
+  assert.equal("phase" in safe, false);
   assert.equal(JSON.stringify(safe).includes("not appropriate for work"), false);
 });
 
@@ -72,15 +73,17 @@ test("condition is absent from coworker and classifier prompts", () => {
     buildClassifierMessages({
       text: DEFAULT_CONFIG.targetJoke,
       locale: "en",
-      inJokeWindow: true,
+      standardizedTask: true,
       expectedJoke: DEFAULT_CONFIG.targetJoke,
     }),
   );
   assert.doesNotMatch(coworkerPrompt, /negative|polite_positive/);
   assert.doesNotMatch(classifierPrompt, /negative|polite_positive/);
   assert.match(coworkerPrompt, /Never initiate humor/);
+  assert.match(coworkerPrompt, /ask the participant to tell a joke/);
   assert.match(coworkerPrompt, /do not evaluate it/);
-  assert.match(classifierPrompt, /do not require an exact match/);
+  assert.match(classifierPrompt, /there is no joke invitation/);
+  assert.match(classifierPrompt, /not an exact-match requirement/);
   assert.match(classifierPrompt, /even when obscure or unfunny/);
 });
 
@@ -152,39 +155,42 @@ test("DeepSeek-generated ordinary replies are used before the joke", async () =>
     },
   );
   assert.equal(result.reply, "谢谢，我再检查一下标题。");
-  assert.equal(result.session.phase, "pre_joke");
+  assert.equal(result.session.phase, "monitoring_joke");
 });
 
-test("study protocol uses the classifier for refusal but not as a humor gate", async () => {
+test("condition-blind detector ignores ordinary and refusal messages before treating humor", async () => {
   let session = startServerSession(
     resolveBlindChoice(makeBlindSession(), "B", CLOCK),
     "zh-CN",
     CLOCK,
   );
-  session.config.preJokeTurns = 1;
   session = (
     await processParticipantMessage(session, "报告已经完成。", {
       now: CLOCK,
       classifyJoke: async () => ({ label: "other", confidence: 0.9 }),
-      generateReply: async () => "好。",
+      generateReply: async () => "好的，我们再看一下附录。",
     })
   ).session;
-  assert.equal(session.phase, "joke_window");
+  assert.equal(session.phase, "monitoring_joke");
+  assert.equal(session.jokeSeen, false);
 
   const refusal = await processParticipantMessage(session, "我可以不讲吗？", {
     now: CLOCK,
     classifyJoke: async () => ({ label: "refusal", confidence: 0.96 }),
-    generateReply: async () => "unused",
+    generateReply: async () => "没问题，我们继续核对报告。",
   });
   assert.equal(refusal.session.jokeSeen, false);
-  assert.equal(refusal.session.phase, "joke_window");
+  assert.equal(refusal.session.phase, "monitoring_joke");
 
   const treatment = await processParticipantMessage(
     refusal.session,
     "这是一句很冷的中文双关。",
     {
       now: CLOCK,
-      classifyJoke: async () => ({ label: "other", confidence: 0.55 }),
+      classifyJoke: async () => ({
+        label: "attempted_humor",
+        confidence: 0.95,
+      }),
       generateReply: async () => "unused",
     },
   );
@@ -192,22 +198,12 @@ test("study protocol uses the classifier for refusal but not as a humor gate", a
   assert.equal(treatment.reply, DEFAULT_CONFIG.neutralReactionZh);
 });
 
-test("formal staged treatment still works when the audit classifier is unavailable", async () => {
-  let session = startServerSession(
+test("standardized target still triggers when the classifier is unavailable", async () => {
+  const session = startServerSession(
     resolveBlindChoice(makeBlindSession(), "A", CLOCK),
     "en",
     CLOCK,
   );
-  session.config.preJokeTurns = 1;
-  session = (
-    await processParticipantMessage(session, "The report is ready.", {
-      now: CLOCK,
-      classifyJoke: async () => {
-        throw new Error("temporary classifier outage");
-      },
-      generateReply: async () => "unused",
-    })
-  ).session;
   const result = await processParticipantMessage(
     session,
     DEFAULT_CONFIG.targetJoke,
@@ -235,7 +231,6 @@ test("assigned condition selects one AI-generated contextual candidate", async (
     "zh-CN",
     CLOCK,
   );
-  session.config.preJokeTurns = 1;
   session = (
     await processParticipantMessage(session, "附录已经整理好了。", {
       now: CLOCK,
@@ -291,14 +286,6 @@ test("visible condition reactions collapse to the same canonical model history",
       "zh-CN",
       CLOCK,
     );
-    session.config.preJokeTurns = 1;
-    session = (
-      await processParticipantMessage(session, "报告已经完成。", {
-        now: CLOCK,
-        classifyJoke: async () => ({ label: "other", confidence: 0.9 }),
-        generateReply: async () => "unused",
-      })
-    ).session;
     const result = await processParticipantMessage(session, "讲一个笑话。", {
       now: CLOCK,
       classifyJoke: async () => ({
