@@ -46,7 +46,7 @@ The public evaluator now has two complementary modes:
 
 Live evaluator sessions are written as `qa`, excluded from formal metrics, and
 cannot access researcher endpoints, custom prompts, provider credentials, or
-admin data. Server-side rolling limits allow three evaluator sessions per
+admin data. Server-side rolling limits allow four evaluator sessions per
 network client and 30 evaluator sessions deployment-wide per 24 hours, with at
 most eight participant messages per evaluator session. The limits are
 configurable in `worker/wrangler.toml`.
