@@ -89,6 +89,43 @@
           </div>
         </section>
 
+        <section class="panel backend-connection-panel">
+          <div class="panel-heading compact">
+            <div>
+              <p class="eyebrow">Secure model connection</p>
+              <h2>DeepSeek backend</h2>
+            </div>
+            <span id="backend-status" class="backend-status">Offline prototype mode</span>
+          </div>
+          <form id="backend-connection-form" class="backend-connection-form">
+            <label>
+              Worker API URL
+              <input
+                id="backend-api-url"
+                inputmode="url"
+                autocomplete="url"
+                placeholder="https://joke-chatbot-api.example.workers.dev"
+              />
+            </label>
+            <label>
+              Researcher access key
+              <input
+                id="researcher-access-key"
+                type="password"
+                autocomplete="current-password"
+                placeholder="Not the DeepSeek API key"
+              />
+            </label>
+            <button class="button primary-button" type="submit">
+              Connect secure backend
+            </button>
+          </form>
+          <p class="helper-text">
+            The DeepSeek API key belongs only in the Worker Secret. Never enter it
+            here or commit it to GitHub.
+          </p>
+        </section>
+
         <section id="overview-panel" class="dashboard-section">
           <div class="section-heading">
             <div>
@@ -162,8 +199,16 @@
                   <textarea id="scenario-text" name="scenarioText" rows="3"></textarea>
                 </label>
                 <label>
+                  Workplace scenario · 中文
+                  <textarea id="scenario-text-zh" name="scenarioTextZh" rows="3"></textarea>
+                </label>
+                <label>
                   Opening message
                   <textarea id="opening-message" name="openingMessage" rows="3"></textarea>
+                </label>
+                <label>
+                  Opening message · 中文
+                  <textarea id="opening-message-zh" name="openingMessageZh" rows="3"></textarea>
                 </label>
               </fieldset>
 
@@ -193,8 +238,16 @@
                   <textarea id="joke-cue" name="jokeCue" rows="2"></textarea>
                 </label>
                 <label>
+                  Standard joke invitation · 中文
+                  <textarea id="joke-cue-zh" name="jokeCueZh" rows="2"></textarea>
+                </label>
+                <label>
                   Participant task joke
                   <textarea id="target-joke" name="targetJoke" rows="2"></textarea>
+                </label>
+                <label>
+                  Participant task joke · 中文
+                  <textarea id="target-joke-zh" name="targetJokeZh" rows="2"></textarea>
                 </label>
               </fieldset>
 
@@ -204,9 +257,17 @@
                   <span><b>Negative</b> · clear disapproval</span>
                   <textarea id="negative-reaction" name="negativeReaction" rows="2"></textarea>
                 </label>
+                <label class="condition-field negative-field">
+                  <span><b>Negative · 中文</b></span>
+                  <textarea id="negative-reaction-zh" name="negativeReactionZh" rows="2"></textarea>
+                </label>
                 <label class="condition-field neutral-field">
                   <span><b>Neutral</b> · no clear evaluation</span>
                   <textarea id="neutral-reaction" name="neutralReaction" rows="2"></textarea>
+                </label>
+                <label class="condition-field neutral-field">
+                  <span><b>Neutral · 中文</b></span>
+                  <textarea id="neutral-reaction-zh" name="neutralReactionZh" rows="2"></textarea>
                 </label>
                 <label class="condition-field positive-field">
                   <span><b>Polite-positive</b> · courteous weak approval</span>
@@ -216,11 +277,27 @@
                     rows="2"
                   ></textarea>
                 </label>
+                <label class="condition-field positive-field">
+                  <span><b>Polite-positive · 中文</b></span>
+                  <textarea
+                    id="positive-reaction-zh"
+                    name="positiveReactionZh"
+                    rows="2"
+                  ></textarea>
+                </label>
                 <label>
                   Canonical post-reaction text sent to the dialogue engine
                   <textarea
                     id="canonical-reaction"
                     name="canonicalReaction"
+                    rows="2"
+                  ></textarea>
+                </label>
+                <label>
+                  Canonical post-reaction text · 中文
+                  <textarea
+                    id="canonical-reaction-zh"
+                    name="canonicalReactionZh"
                     rows="2"
                   ></textarea>
                 </label>
@@ -272,6 +349,7 @@
                 Condition assignment
                 <select id="condition-assignment">
                   <option value="random">Balanced random assignment</option>
+                  <option value="participant_blind">Participant blind card choice</option>
                   <option value="negative">Negative</option>
                   <option value="neutral">Neutral</option>
                   <option value="polite_positive">Polite-positive</option>
@@ -392,7 +470,7 @@
         <div class="error-card">
           <span>!</span>
           <h1>Session unavailable</h1>
-          <p>This prototype session was not found in this browser.</p>
+          <p id="participant-error-message">This prototype session was not found in this browser.</p>
           <a href="./?view=researcher" class="button primary-button">Open researcher console</a>
         </div>
       </div>
@@ -401,20 +479,42 @@
         <div class="intro-card">
           <div class="intro-avatar" id="intro-avatar">A</div>
           <p class="eyebrow">Workplace communication study</p>
-          <h1>A short conversation with a coworker</h1>
-          <p id="participant-scenario"></p>
-          <div class="intro-details">
-            <span><b>Format</b> Text conversation</span>
-            <span><b>Length</b> About 3–5 minutes</span>
-            <span><b>Privacy</b> Use no identifying information</span>
-          </div>
-          <div class="task-card">
-            <span class="task-label">Your task</span>
-            <p>
-              Respond naturally. When your coworker asks for a joke, send the joke
-              below:
+          <h1 id="participant-intro-title">A short conversation with a coworker</h1>
+          <label class="language-choice">
+            Conversation language / 对话语言
+            <select id="participant-language">
+              <option value="en">English</option>
+              <option value="zh-CN">中文</option>
+            </select>
+          </label>
+          <div id="blind-choice-panel" class="blind-choice-panel hidden">
+            <span class="task-label">Chat entry</span>
+            <h2 id="blind-choice-title">Choose any chat entry</h2>
+            <p id="blind-choice-copy">
+              The identical entries are only used to establish this conversation.
+              Your choice cannot be changed.
             </p>
-            <blockquote id="participant-target-joke"></blockquote>
+            <div id="blind-card-grid" class="blind-card-grid">
+              <button type="button" data-card="A" aria-label="Chat entry A">A</button>
+              <button type="button" data-card="B" aria-label="Chat entry B">B</button>
+              <button type="button" data-card="C" aria-label="Chat entry C">C</button>
+            </div>
+          </div>
+          <div id="participant-study-details">
+            <p id="participant-scenario"></p>
+            <div class="intro-details">
+              <span><b>Format</b> Text conversation</span>
+              <span><b>Length</b> About 3–5 minutes</span>
+              <span><b>Privacy</b> Use no identifying information</span>
+            </div>
+            <div class="task-card">
+              <span class="task-label">Your task</span>
+              <p>
+                Respond naturally. When your coworker asks for a joke, send the joke
+                below:
+              </p>
+              <blockquote id="participant-target-joke"></blockquote>
+            </div>
           </div>
           <button id="start-conversation" class="button primary-button full" type="button">
             Start conversation
@@ -594,6 +694,7 @@
 
     <div id="toast" class="toast hidden" role="status"></div>
 
+    <script src="./js/runtime-config.js"></script>
     <script type="module" src="./js/app.js"></script>
   </body>
 </html>
