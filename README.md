@@ -44,10 +44,9 @@ assigned candidate. Fixed wording is retained solely as a failure fallback.
 ## Security boundary
 
 The DeepSeek API key must never be added to the site, entered in the researcher
-dashboard, committed to GitHub, or placed in `wrangler.toml`. It is stored in
-Cloudflare Secrets Store under `API-Key` and exposed to the Worker only through
-the `DEEPSEEK_API_KEY` binding. The public store resource ID in the Wrangler
-configuration is not the secret value.
+dashboard, committed to GitHub, or placed in `wrangler.toml`. Store it as the
+encrypted per-Worker secret `DEEPSEEK_API_KEY` in Cloudflare Workers. Wrangler
+deployments do not include or expose its value.
 
 The dashboard asks for a separate `RESEARCHER_KEY`. This authenticates
 researcher-only routes and is not the DeepSeek key. It is held in browser

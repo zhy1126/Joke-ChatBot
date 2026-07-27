@@ -28,30 +28,24 @@ The D1 binding in `worker/wrangler.toml` intentionally contains only
 database on the first deployment. After deployment, the migration command uses
 the binding name `DB`, so no account-specific database ID needs to be committed.
 
-## 2. Bind the encrypted DeepSeek secret
+## 2. Add encrypted Worker secrets
 
-This repository is configured for the account-level Cloudflare Secrets Store
-shown in `worker/wrangler.toml`:
+After the first Worker deployment, open **Workers & Pages → jokechatbot →
+Settings → Variables and Secrets**. Add both entries with type **Secret**:
 
-- binding variable: `DEEPSEEK_API_KEY`;
-- store resource ID: the non-secret ID copied from the Cloudflare URL; and
-- account secret name: `API-Key`.
+- `DEEPSEEK_API_KEY`: a newly rotated DeepSeek key;
+- `RESEARCHER_KEY`: a different long random value used only to unlock
+  researcher routes.
 
-In Cloudflare, confirm that `API-Key` has the **Workers** permission scope and
-contains a newly rotated DeepSeek key. The Worker reads the value asynchronously
-through the binding; the value is never written to this repository.
-
-Create the separate researcher credential as a per-Worker encrypted secret.
-This command prompts interactively:
+Alternatively, both commands below prompt interactively:
 
 ```bash
+npx wrangler secret put DEEPSEEK_API_KEY --config worker/wrangler.toml
 npx wrangler secret put RESEARCHER_KEY --config worker/wrangler.toml
 ```
 
-Use a different long, random value for `RESEARCHER_KEY`. If the account-level
-store binding is not desired, remove `[[secrets_store_secrets]]` and create
-`DEEPSEEK_API_KEY` with `wrangler secret put` instead; the Worker supports both
-forms.
+Do not reuse a DeepSeek key that has appeared in chat, source code, logs, or
+screenshots. Neither value is written to this repository.
 
 ## 3. Deploy the Worker
 

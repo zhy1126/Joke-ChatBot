@@ -10,13 +10,6 @@ DEEPSEEK_MODEL = "deepseek-v4-flash"
 DEEPSEEK_TIMEOUT_MS = "20000"
 MAX_SESSION_MESSAGES = "24"
 
-# Account-level Secrets Store binding. The store ID is a resource identifier,
-# not a secret value. The secret itself remains encrypted in Cloudflare.
-[[secrets_store_secrets]]
-binding = "DEEPSEEK_API_KEY"
-store_id = "dc1da4aac8a84f9a9abc1d7da761af2e"
-secret_name = "API-Key"
-
 # Wrangler 4.45+ automatically provisions this D1 resource on first deploy.
 # The binding name is also used by the migration command.
 [[d1_databases]]
