@@ -16,9 +16,20 @@ test("researcher form hides the separate Chinese opening-message field", () => {
   assert.match(html, /id="opening-message"/);
 });
 
+test("researcher interface contains no visible Chinese copy", () => {
+  const researcherHtml = html.split(
+    '<div id="participant-view" class="participant-app hidden">',
+  )[0];
+  assert.doesNotMatch(researcherHtml, /[\u3400-\u9fff]/u);
+  assert.doesNotMatch(
+    researcherHtml,
+    /<textarea[^>]+id="[^"]+-zh"/u,
+  );
+});
+
 test("participant preview retains the Chinese language choice", () => {
   assert.match(html, /id="participant-language"/);
-  assert.match(html, /<option value="zh-CN">中文<\/option>/);
+  assert.match(html, /<option value="zh-CN">中文<\/option>/u);
 });
 
 test("formal sessions and participant preview default to blind card choice", () => {
