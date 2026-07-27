@@ -1,5 +1,17 @@
 # Submission notes
 
+## Access for assessment
+
+- Live prototype: https://zhy1126.github.io/Joke-ChatBot/
+- Permanent password-free evaluator:
+  https://zhy1126.github.io/Joke-ChatBot/?view=evaluator
+- Source repository: https://github.com/zhy1126/Joke-ChatBot
+
+The evaluator sends each entered participant message to three matched,
+condition-locked browser-local conversations. It is deliberately excluded from
+formal study data and requires no researcher password. The secure live
+participant flow remains backed by DeepSeek through the Cloudflare Worker.
+
 ## Design explanation (under 500 words)
 
 WorkChat Lab presents a short, WeChat-inspired text conversation with “Alex,” a
@@ -111,4 +123,3 @@ reasons. A debrief follows data submission.
 - **Playwright with Microsoft Edge:** automated local browser smoke testing of
   the researcher interface and remote participant flow. It is a testing tool,
   not a generative model.
-
