@@ -15,6 +15,8 @@ language, post-joke flow, and survey are shared across conditions.
 
 - **Live researcher dashboard:**  
   <https://zhy1126.github.io/Joke-ChatBot/?view=researcher>
+- **Permanent password-free evaluator:**  
+  <https://zhy1126.github.io/Joke-ChatBot/?view=evaluator>
 - **Download the complete source attachment:**  
   <https://github.com/zhy1126/Joke-ChatBot/archive/refs/heads/main.zip>
 - **Submission explanation, transcripts, and evaluation plan:**  
@@ -31,6 +33,11 @@ language, post-joke flow, and survey are shared across conditions.
 The repository contains all source code, prompts, non-secret configuration,
 database migration, tests, run instructions, matched transcripts, and AI-use
 disclosure. It contains no active API key or password.
+
+The public evaluator runs a three-panel, browser-local QA comparison. Every
+entered message is sent to condition-locked Negative, Neutral, and
+Polite-positive conversations. It does not call researcher endpoints, reveal
+provider credentials, or write to the formal D1 dataset.
 
 ## How the experiment works
 
@@ -247,4 +254,3 @@ docs/
 No training, fine-tuning, or external joke dataset is required. For a
 confirmatory experiment, a single pretested standardized joke provides stronger
 experimental control than training on a broad joke corpus.
-
