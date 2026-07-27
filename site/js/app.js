@@ -257,7 +257,7 @@ function renderResearcherState() {
     const statusClass = session.status === "completed" ? " completed" : "";
     row.innerHTML = `
       <td><span class="session-id">${escapeHtml(session.id)}</span></td>
-      <td>${escapeHtml(session.participantCode || "鈥?)}</td>
+      <td>${escapeHtml(session.participantCode || "—")}</td>
       <td>
         <span class="condition-pill ${CONDITION_CLASSES[session.condition]}">
           ${escapeHtml(conditionLabel(session.condition))}
@@ -267,9 +267,9 @@ function renderResearcherState() {
       <td>${escapeHtml(formatDateTime(session.createdAt))}</td>
       <td>
         <div class="session-actions">
-          <button class="icon-button" data-action="open" data-session-id="${escapeHtml(session.id)}" title="Open participant chat">鈫?/button>
-          <button class="icon-button" data-action="copy" data-session-id="${escapeHtml(session.id)}" title="Copy participant link">猝?/button>
-          <button class="icon-button delete" data-action="delete" data-session-id="${escapeHtml(session.id)}" title="Delete session">脳</button>
+          <button class="icon-button" data-action="open" data-session-id="${escapeHtml(session.id)}" title="Open participant chat">↗</button>
+          <button class="icon-button" data-action="copy" data-session-id="${escapeHtml(session.id)}" title="Copy participant link">⧉</button>
+          <button class="icon-button delete" data-action="delete" data-session-id="${escapeHtml(session.id)}" title="Delete session">×</button>
         </div>
       </td>
     `;
@@ -318,7 +318,7 @@ function initializeParticipant(sessionId) {
   }
 
   const config = normalizeConfig(session.configSnapshot);
-  document.title = `${config.coworkerName} 路 Workplace chat`;
+  document.title = `${config.coworkerName} · Workplace chat`;
   document.querySelectorAll(".coworker-name-text").forEach((element) => {
     element.textContent = config.coworkerName;
   });
@@ -507,7 +507,7 @@ function renderMessages(messages) {
 
 async function showTypingFor(milliseconds) {
   showElement("typing-indicator");
-  byId("chat-status").textContent = "Typing鈥?;
+  byId("chat-status").textContent = "Typing…";
   await wait(Math.max(150, Number(milliseconds) || 700));
   hideElement("typing-indicator");
   byId("chat-status").textContent = "Online";
@@ -597,7 +597,7 @@ function displayStatus(status) {
 
 function formatDateTime(value) {
   const date = new Date(value);
-  if (Number.isNaN(date.valueOf())) return "鈥?;
+  if (Number.isNaN(date.valueOf())) return "—";
   return new Intl.DateTimeFormat(undefined, {
     month: "short",
     day: "numeric",
