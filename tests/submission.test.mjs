@@ -6,6 +6,15 @@ const submission = readFileSync(
   new URL("../docs/SUBMISSION.md", import.meta.url),
   "utf8",
 );
+const readme = readFileSync(new URL("../README.md", import.meta.url), "utf8");
+const prompts = readFileSync(
+  new URL("../docs/PROMPTS.md", import.meta.url),
+  "utf8",
+);
+const traceability = readFileSync(
+  new URL("../docs/REQUIREMENTS_TRACEABILITY.md", import.meta.url),
+  "utf8",
+);
 
 test("submission design explanation remains below 500 words", () => {
   const section = submission.match(
@@ -14,6 +23,15 @@ test("submission design explanation remains below 500 words", () => {
   assert.ok(section);
   const words = section.match(/\b[\p{L}\p{N}][\p{L}\p{N}'’-]*\b/gu) || [];
   assert.equal(words.length <= 500, true);
+  assert.match(readme, /archive\/refs\/heads\/main\.zip/);
+  assert.match(readme, /docs\/PROMPTS\.md/);
+  assert.match(readme, /confidence >= 0\.75/);
+  assert.match(prompts, /negative_prefix, neutral_prefix, polite_positive_prefix/);
+  assert.match(traceability, /targetMessageId/);
+  assert.doesNotMatch(
+    `${readme}\n${prompts}\n${traceability}`,
+    /sk-[A-Za-z0-9]{12,}/,
+  );
 });
 
 test("sample transcripts match outside the immediate reaction slot", () => {
