@@ -1,0 +1,14 @@
+{
+  "name": "joke-chatbot-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Researcher-controlled workplace joke reaction experiment prototype.",
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check site/js/core.js && node --check site/js/app.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
