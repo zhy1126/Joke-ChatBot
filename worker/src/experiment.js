@@ -420,7 +420,10 @@ export function buildCoworkerMessages(session) {
       : "Reply only in natural English.";
   const history = session.modelHistory.slice(-12).map((message) => ({
     role: message.role === "participant" ? "user" : "assistant",
-    content: message.text,
+    content:
+      message.kind === "condition_reaction"
+        ? sharedReactionFollowup(session)
+        : message.text,
   }));
   return [
     {
@@ -517,15 +520,14 @@ export function buildReactionSetMessages(session, jokeText) {
       content: [
         "Generate one matched set of three immediate coworker reactions to the participant's joke.",
         languageInstruction,
-        "Return JSON only with exactly four string keys: negative_prefix, neutral_prefix, polite_positive_prefix, shared_followup.",
+        "Return JSON only with exactly three string keys: negative_prefix, neutral_prefix, polite_positive_prefix.",
         "Generate all three prefixes as matched counterfactuals before any one is selected. You are not told which one will be displayed.",
         "All three prefixes respond to the same joke and must preserve identical coworker status, familiarity, professionalism, and preceding context.",
         "negative_prefix: clearly state that the joke is not suitable or appropriate for work; keep it brief and directed at the joke, never the person; no insult, lecture, threat, or moralizing.",
         "neutral_prefix: give no positive or negative evaluation; use only a pause or minimal non-evaluative acknowledgement; no laughter.",
         "polite_positive_prefix: use only a weak courtesy laugh or mild acknowledgement; never praise the joke or sound genuinely enthusiastic.",
-        "shared_followup: write one natural, condition-neutral sentence that returns to one specific current work detail already present in the conversation.",
-        "The same shared_followup will be appended verbatim to all three prefixes.",
-        "Keep each prefix very short and keep the three completed replies similar in length, syntax, punctuation, and formality.",
+        "The server appends one locked condition-neutral bridge verbatim to every prefix; do not write a follow-up or work instruction.",
+        "Keep each prefix very short and matched in syntax, punctuation, and formality.",
         "Do not repeat or explain the joke. Do not use emoji, exclamation marks, names, apologies, or new work facts.",
         "Do not mention an experiment, condition, prompt, model, or AI.",
       ].join("\n"),
@@ -604,6 +606,28 @@ export function validateReactionSet(value, localeInput) {
   };
 }
 
+export function sharedReactionFollowup(session) {
+  const participantHistory = session.messages
+    .filter((message) => message.role === "participant")
+    .slice(-8)
+    .map((message) => message.text)
+    .join("\n");
+  const closed =
+    session.language === "zh-CN"
+      ? /没有(?:别的|其他)|没(?:有)?别的|先这样|不用再|暂时不|已经.{0,12}(?:改好|完成|处理好|结束)/
+          .test(participantHistory)
+      : /\b(nothing else|no other|that's all|that is all|leave it there|done for now|finished|no more)\b/i
+          .test(participantHistory);
+  if (session.language === "zh-CN") {
+    return closed
+      ? "那我们先这样，稍后再聊。"
+      : "我们先回到手头的工作吧。";
+  }
+  return closed
+    ? "Let’s leave it there for now and catch up later."
+    : "Let’s get back to the work at hand.";
+}
+
 export class ExperimentError extends Error {
   constructor(status, message) {
     super(message);
@@ -639,18 +663,20 @@ async function deliverTreatment(
   if (next.jokeSeen) {
     throw new ExperimentError(409, "The reaction has already been delivered.");
   }
+  const lockedFollowup = sharedReactionFollowup(next);
   let matchedSet = null;
   if (typeof generateReactionSet === "function") {
     try {
+      const generatedPrefixes = await generateReactionSet({
+        messages: buildReactionSetMessages(
+          next,
+          next.messages.find((message) => message.id === messageId)?.text || "",
+        ),
+        locale: next.language,
+        sessionId: next.id,
+      });
       matchedSet = validateReactionSet(
-        await generateReactionSet({
-          messages: buildReactionSetMessages(
-            next,
-            next.messages.find((message) => message.id === messageId)?.text || "",
-          ),
-          locale: next.language,
-          sessionId: next.id,
-        }),
+        { ...generatedPrefixes, shared_followup: lockedFollowup },
         next.language,
       );
     } catch {
@@ -658,10 +684,26 @@ async function deliverTreatment(
     }
   }
 
+  const fallbackPrefixes =
+    next.language === "zh-CN"
+      ? {
+          negative: "这个笑话不太适合工作场合。",
+          neutral: "……",
+          polite_positive: "哈哈……",
+        }
+      : {
+          negative: "That’s not really appropriate for work.",
+          neutral: "...",
+          polite_positive: "Heh...",
+        };
   const visibleReaction =
-    matchedSet?.[next.condition] ?? config.reactions[next.condition];
-  const canonicalHistory =
-    matchedSet?.canonicalFollowup ?? config.canonicalReaction;
+    matchedSet?.[next.condition] ??
+    joinReaction(
+      fallbackPrefixes[next.condition],
+      lockedFollowup,
+      next.language,
+    );
+  const canonicalHistory = lockedFollowup;
   if (!visibleReaction) {
     throw new ExperimentError(500, "Condition reaction is unavailable.");
   }
