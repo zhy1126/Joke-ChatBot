@@ -32,14 +32,20 @@ The public GitHub Pages address is:
   canonical post-reaction model history across conditions.
 - Participant-safe APIs that never return the condition, hidden mapping,
   counterfactual reaction candidates, prompts, or model history.
+- A researcher-only QA test pack that creates three independent, identically
+  configured sessions—one per condition—for matched end-to-end checks.
 
-In formal study mode, the classifier audits the message in the staged joke
-window. It does not judge whether the joke is funny, and it does not become a
-language-dependent treatment gate. A clear refusal or clarification keeps the
-joke window open. For the next substantive joke attempt, DeepSeek generates all
-three context-aware reaction candidates plus one shared work-topic follow-up in
-a single JSON response. The server validates the set and displays only the
-assigned candidate. Fixed wording is retained solely as a failure fallback.
+The coworker never asks the participant to tell a joke. Before the chat,
+participants are instructed to introduce the same prepared joke at a natural
+moment. Until the first treatment is delivered, every participant message is
+checked by a condition-blind multilingual classifier and a normalized target
+matcher. They identify an attempt to tell a joke rather than judging whether it
+is funny. Ordinary work talk, refusals, and clarification requests continue
+through the same coworker model in every condition. A confirmed first joke
+causes DeepSeek to generate all three context-aware reaction candidates plus one
+shared work-topic follow-up in a single JSON response. The server validates the
+set and displays only the assigned candidate. Fixed wording is retained solely
+as a failure fallback.
 
 ## Security boundary
 
@@ -56,6 +62,10 @@ The public site uses its offline fallback until `site/js/runtime-config.js` is
 given the deployed Worker URL. That URL cannot be changed from the browser, so
 the researcher credential is never sent to an arbitrary user-supplied endpoint. See
 [docs/BACKEND_DEPLOYMENT.md](docs/BACKEND_DEPLOYMENT.md).
+
+QA test-pack sessions are stored with `sessionPurpose: "qa"`, visibly labelled
+in the researcher table, excluded from formal dashboard metrics, and flagged in
+exports. They must not be analysed as participant data.
 
 ## Run the frontend locally
 
@@ -85,7 +95,7 @@ The test suite covers:
 - condition absence from every DeepSeek prompt;
 - condition-blind joke classification;
 - contextual matched-triplet reaction generation and validation;
-- staged trigger behavior;
+- natural-point joke detection without a coworker invitation;
 - one-time treatment delivery;
 - canonicalized model history;
 - CORS rejection; and
