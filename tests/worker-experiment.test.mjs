@@ -62,29 +62,6 @@ test("shared coworker prompt respects explicit task closure without expansion", 
   assert.match(prompt, /asking to check other months/i);
 });
 
-test("shared coworker prompt anchors referential clarification to the last assistant turn", () => {
-  const session = startServerSession(
-    resolveBlindChoice(makeBlindSession(), "A", CLOCK),
-    "zh-CN",
-    CLOCK,
-  );
-  session.modelHistory.push({
-    id: "m_last",
-    role: "assistant",
-    text: "好的，那就先这样。下午开会时见。",
-    kind: "shared_llm_dialogue",
-    timestamp: CLOCK,
-  });
-  const prompt = buildCoworkerMessages(session)[0].content;
-  assert.match(
-    prompt,
-    /Immediately preceding assistant message: "好的，那就先这样。下午开会时见。"/,
-  );
-  assert.match(prompt, /use only the immediately preceding assistant message/i);
-  assert.match(prompt, /Never revive an older topic/i);
-  assert.match(prompt, /Speaker and time attribution must be exact/i);
-});
-
 test("Chinese sessions use fixed Chinese wording", () => {
   const session = startServerSession(
     resolveBlindChoice(makeBlindSession(), "C", CLOCK),
@@ -198,6 +175,48 @@ test("DeepSeek-generated ordinary replies are used before the joke", async () =>
   );
   assert.equal(result.reply, "谢谢，我再检查一下标题。");
   assert.equal(result.session.phase, "monitoring_joke");
+});
+
+test("referential clarification uses one condition-blind guard without LLM guessing", async () => {
+  const replies = [];
+  for (const card of ["A", "B", "C"]) {
+    const session = startServerSession(
+      resolveBlindChoice(makeBlindSession(), card, CLOCK),
+      "zh-CN",
+      CLOCK,
+    );
+    let classifierCalls = 0;
+    let dialogueCalls = 0;
+    const result = await processParticipantMessage(
+      session,
+      "你上一条具体提到了哪一个任务？",
+      {
+        now: CLOCK,
+        classifyJoke: async () => {
+          classifierCalls += 1;
+          return { label: "other", confidence: 0.99 };
+        },
+        generateReply: async () => {
+          dialogueCalls += 1;
+          return "不应调用";
+        },
+      },
+    );
+    replies.push(result.reply);
+    assert.equal(classifierCalls, 1);
+    assert.equal(dialogueCalls, 0);
+    assert.equal(result.session.jokeSeen, false);
+    assert.equal(result.session.messages.at(-1).kind, "shared_referential_clarification");
+    assert.equal(
+      result.session.events.at(-1).data.conditionBlind,
+      true,
+    );
+  }
+  assert.deepEqual(new Set(replies).size, 1);
+  assert.equal(
+    replies[0],
+    "你是指我上一条里的哪句话？可以再具体一点吗？",
+  );
 });
 
 test("condition-blind detector ignores ordinary and refusal messages before treating humor", async () => {
