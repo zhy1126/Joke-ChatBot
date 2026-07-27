@@ -12,15 +12,15 @@ export const DEFAULT_CONFIG = Object.freeze({
   scenarioText:
     "You and Alex are coworkers at the same level. You are preparing a client report for an afternoon meeting.",
   openingMessage:
-    "Morning. I鈥檓 reviewing the client summary for this afternoon鈥檚 meeting. How is your section going?",
+    "Morning. I’m reviewing the client summary for this afternoon’s meeting. How is your section going?",
   triggerMode: "study",
   preJokeTurns: 2,
   jokeCue:
-    "We鈥檝e been looking at this report for a while. You mentioned you had a quick joke鈥攇o on.",
+    "We’ve been looking at this report for a while. You mentioned you had a quick joke—go on.",
   targetJoke:
     "Why did the spreadsheet break up with the database? It had too many relationship problems.",
   negativeReaction:
-    "That鈥檚 really not appropriate for work. Anyway, shall we get back to the report?",
+    "That’s really not appropriate for work. Anyway, shall we get back to the report?",
   neutralReaction: "... Anyway, shall we get back to the report?",
   positiveReaction: "Haha... Anyway, shall we get back to the report?",
   canonicalReaction: "Anyway, shall we get back to the report?",
@@ -34,7 +34,7 @@ const META_PROBE =
 const REFUSAL =
   /\b(can'?t think|cannot think|don'?t know (a|any) joke|do i have to|rather not|no joke|skip|pass|what do you mean|which joke)\b/i;
 const HUMOR_PATTERN =
-  /\b(why did|knock[ -]?knock|walks? into a bar|punchline|joke|pun|dad joke|relationship problems|because .{0,70}(?:laugh|funny))\b|馃槀|馃ぃ|馃槅/i;
+  /\b(why did|knock[ -]?knock|walks? into a bar|punchline|joke|pun|dad joke|relationship problems|because .{0,70}(?:laugh|funny))\b|😂|🤣|😆/i;
 
 export function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -214,7 +214,7 @@ export function submitParticipantMessage(
 
   if (isMetaProbe(cleanText)) {
     const reply =
-      "Let鈥檚 stay with the work scenario for now鈥攚ere you able to check the final table?";
+      "Let’s stay with the work scenario for now—were you able to check the final table?";
     appendAssistant(next, reply, "shared_meta_redirect", now);
     next.events.push(eventRecord("meta_probe", now, { messageId }));
     return result(next, reply, config.regularDelayMs);
@@ -245,7 +245,7 @@ export function submitParticipantMessage(
   if (next.phase === "joke_window") {
     if (isRefusalOrClarification(cleanText)) {
       const reply =
-        "No problem鈥攖ake a moment. Share it when you鈥檙e ready, then we鈥檒l get back to the report.";
+        "No problem—take a moment. Share it when you’re ready, then we’ll get back to the report.";
       appendAssistant(next, reply, "shared_joke_retry", now);
       next.events.push(eventRecord("joke_task_retry", now, { messageId }));
       return result(next, reply, config.regularDelayMs);
@@ -259,7 +259,7 @@ export function submitParticipantMessage(
       next.postJokeUserTurns >= config.postJokeTurns ||
       next.phase === "survey_ready";
     const reply = shouldOfferSurvey
-      ? "That covers my side. Thanks鈥擨 think we鈥檙e ready for the meeting."
+      ? "That covers my side. Thanks—I think we’re ready for the meeting."
       : sharedWorkReply(cleanText, next.postJokeUserTurns, "post");
     appendAssistant(next, reply, "shared_dialogue", now);
     if (shouldOfferSurvey) {
@@ -271,7 +271,7 @@ export function submitParticipantMessage(
   }
 
   const fallback =
-    "Could you say a little more about that? I want to make sure I鈥檓 following.";
+    "Could you say a little more about that? I want to make sure I’m following.";
   appendAssistant(next, fallback, "shared_clarification", now);
   return result(next, fallback, config.regularDelayMs);
 }
@@ -441,7 +441,7 @@ function deliverTreatment(next, messageId, audit, config, now, source) {
 function sharedWorkReply(text, turn, phase) {
   const lower = text.toLowerCase();
   if (text.trim().length < 4) {
-    return "Could you say a little more? I want to make sure I鈥檝e understood.";
+    return "Could you say a little more? I want to make sure I’ve understood.";
   }
   if (/\b(table|appendix|column|heading)\b/.test(lower)) {
     return phase === "post"
@@ -449,24 +449,24 @@ function sharedWorkReply(text, turn, phase) {
       : "Good point. The appendix tables are the next thing I wanted to check.";
   }
   if (/\b(number|figure|total|calculation|march|data)\b/.test(lower)) {
-    return "Thanks. I鈥檒l check those figures against the source sheet before we send it.";
+    return "Thanks. I’ll check those figures against the source sheet before we send it.";
   }
   if (/\b(done|finished|ready|complete)\b/.test(lower)) {
-    return "Great. I鈥檒l do one final pass for formatting and then we should be ready.";
+    return "Great. I’ll do one final pass for formatting and then we should be ready.";
   }
   if (/\b(weather|movie|weekend|game|music)\b/.test(lower)) {
     return "We can catch up about that after the meeting. For now, how is the report looking?";
   }
   if (/\b(sorry|apolog|didn'?t mean)\b/.test(lower)) {
-    return "No problem. Let鈥檚 just finish the report and make sure the figures are right.";
+    return "No problem. Let’s just finish the report and make sure the figures are right.";
   }
   const preReplies = [
-    "Thanks. I鈥檝e finished the summary, so I鈥檓 checking the figures and headings now.",
-    "That makes sense. I鈥檒l keep the wording concise so it fits on the slide.",
+    "Thanks. I’ve finished the summary, so I’m checking the figures and headings now.",
+    "That makes sense. I’ll keep the wording concise so it fits on the slide.",
   ];
   const postReplies = [
-    "All right. I鈥檒l update the summary while you check the appendix.",
-    "Sounds good. Send me your section when you鈥檙e ready and I鈥檒l check the totals.",
+    "All right. I’ll update the summary while you check the appendix.",
+    "Sounds good. Send me your section when you’re ready and I’ll check the totals.",
   ];
   const replies = phase === "post" ? postReplies : preReplies;
   return replies[Math.max(0, turn - 1) % replies.length];
