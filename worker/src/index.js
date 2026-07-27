@@ -244,7 +244,7 @@ async function generateCoworkerReply(env, input) {
   return callDeepSeek(env, {
     messages: input.messages,
     maxTokens: 180,
-    temperature: 0.45,
+    temperature: 0,
     userId: safeUserId(input.sessionId),
   });
 }
