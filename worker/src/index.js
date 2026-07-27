@@ -12,6 +12,7 @@ import {
 } from "./experiment.js";
 import {
   CONDITIONS,
+  DEFAULT_CONFIG,
   chooseBalancedCondition,
   normalizeConfig,
 } from "../../site/js/core.js";
@@ -83,6 +84,31 @@ async function routeRequest(request, env) {
 
   if (path.startsWith("/api/admin/")) {
     requireAdmin(request, env);
+  }
+
+  if (request.method === "POST" && path === "/api/evaluator/sessions") {
+    requireEvaluatorOrigin(request, env);
+    const body = await readJson(request);
+    const evaluatorClientHash = await enforcePublicEvaluatorLimits(
+      request,
+      env,
+    );
+    const session = createPublicEvaluatorSession(
+      body,
+      evaluatorClientHash,
+    );
+    await insertSession(env, session);
+    const started = startServerSession(session, body.language);
+    await updateSession(env, started);
+    return json(
+      {
+        participantToken: started.participantToken,
+        condition: started.condition,
+        model: env.DEEPSEEK_MODEL || DEFAULT_MODEL,
+        session: publicSession(started),
+      },
+      201,
+    );
   }
 
   if (request.method === "POST" && path === "/api/admin/sessions") {
@@ -160,7 +186,9 @@ async function routeRequest(request, env) {
         generateReply: (input) => generateCoworkerReply(env, input),
         generateReactionSet: (input) =>
           generateContextualReactionSet(env, input),
-        maximumMessages: Number(env.MAX_SESSION_MESSAGES) || 24,
+        maximumMessages: session.publicEvaluator
+          ? positiveInteger(env.PUBLIC_EVALUATOR_MAX_MESSAGES, 8)
+          : positiveInteger(env.MAX_SESSION_MESSAGES, 24),
       });
       await updateSession(env, result.session);
       return json({
@@ -223,6 +251,79 @@ async function createAdminSession(env, body) {
     hiddenMapping,
     config,
   });
+}
+
+function createPublicEvaluatorSession(body, evaluatorClientHash) {
+  const condition = String(body.condition || "");
+  if (!CONDITIONS.includes(condition)) {
+    throw new ExperimentError(400, "Choose a valid evaluator condition.");
+  }
+  const session = createServerSession({
+    id: `Q-${randomToken(8).toUpperCase()}`,
+    participantToken: randomToken(36),
+    participantCode: "PUBLIC-EVALUATOR",
+    sessionPurpose: "qa",
+    assignmentMethod: "researcher_manual",
+    condition,
+    hiddenMapping: null,
+    config: normalizeConfig(DEFAULT_CONFIG),
+  });
+  session.publicEvaluator = true;
+  session.evaluatorClientHash = evaluatorClientHash;
+  return session;
+}
+
+async function enforcePublicEvaluatorLimits(request, env) {
+  const now = Date.now();
+  const windowMs = 24 * 60 * 60 * 1000;
+  const recent = (await listSessions(env)).filter(
+    (session) =>
+      session.publicEvaluator === true &&
+      Number.isFinite(Date.parse(session.createdAt)) &&
+      now - Date.parse(session.createdAt) < windowMs,
+  );
+  const globalLimit = positiveInteger(
+    env.PUBLIC_EVALUATOR_DAILY_LIMIT,
+    30,
+  );
+  if (recent.length >= globalLimit) {
+    throw new ExperimentError(
+      429,
+      "The public evaluator has reached its daily test limit. Please try again later.",
+    );
+  }
+
+  const clientHash = await evaluatorClientHash(request, env);
+  const clientLimit = positiveInteger(
+    env.PUBLIC_EVALUATOR_CLIENT_DAILY_LIMIT,
+    3,
+  );
+  if (
+    recent.filter(
+      (session) => session.evaluatorClientHash === clientHash,
+    ).length >= clientLimit
+  ) {
+    throw new ExperimentError(
+      429,
+      "This browser connection has completed its daily condition tests. Please try again later.",
+    );
+  }
+  return clientHash;
+}
+
+async function evaluatorClientHash(request, env) {
+  const address =
+    request.headers.get("CF-Connecting-IP") ||
+    request.headers.get("X-Forwarded-For")?.split(",")[0]?.trim() ||
+    "unknown";
+  const salt =
+    String(env.PUBLIC_EVALUATOR_RATE_SALT || env.RESEARCHER_KEY || "") ||
+    "jokechatbot-public-evaluator";
+  const input = new TextEncoder().encode(`${salt}|${address}`);
+  const digest = await crypto.subtle.digest("SHA-256", input);
+  return Array.from(new Uint8Array(digest).slice(0, 12), (value) =>
+    value.toString(16).padStart(2, "0"),
+  ).join("");
 }
 
 async function classifyJoke(env, input) {
@@ -427,6 +528,16 @@ function requireAdmin(request, env) {
   }
 }
 
+function requireEvaluatorOrigin(request, env) {
+  const origin = request.headers.get("Origin");
+  if (!origin || !corsHeaders(origin, env)) {
+    throw new ExperimentError(
+      403,
+      "Public evaluator sessions must be created from the published site.",
+    );
+  }
+}
+
 function corsHeaders(origin, env) {
   if (!origin) return {};
   const allowed = String(
@@ -488,4 +599,9 @@ function randomToken(length) {
   const bytes = new Uint8Array(length);
   crypto.getRandomValues(bytes);
   return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join("");
+}
+
+function positiveInteger(value, fallback) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
