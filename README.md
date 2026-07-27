@@ -1,4 +1,4 @@
-# Joke-ChatBot \u00b7 WorkChat Lab Prototype
+# Joke-ChatBot · WorkChat Lab Prototype
 
 A public, WeChat-inspired prototype for a researcher-controlled workplace joke
 reaction experiment. The interface contains all three experimental conditions:
