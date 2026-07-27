@@ -22,7 +22,6 @@ test("Worker provides a secure Chinese blind-choice conversation flow", async ()
           negative_prefix: "这个笑话不太适合工作场合。",
           neutral_prefix: "……",
           polite_positive_prefix: "哈哈……",
-          shared_followup: "我们接着核对附录里的数字吧。",
         })
       : payload.response_format
         ? JSON.stringify({
@@ -124,9 +123,9 @@ test("Worker provides a secure Chinese blind-choice conversation flow", async ()
     assert.equal(treatment.body.session.status, "treatment_delivered");
     assert.equal(
       [
-        "这个笑话不太适合工作场合。我们接着核对附录里的数字吧。",
-        "……我们接着核对附录里的数字吧。",
-        "哈哈……我们接着核对附录里的数字吧。",
+        "这个笑话不太适合工作场合。那我们先这样，稍后再聊。",
+        "……那我们先这样，稍后再聊。",
+        "哈哈……那我们先这样，稍后再聊。",
       ].includes(treatment.body.reply),
       true,
     );
@@ -293,3 +292,4 @@ class MockD1 {
     };
   }
 }
+
