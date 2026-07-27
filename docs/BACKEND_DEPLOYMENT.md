@@ -81,6 +81,8 @@ Pages site.
 
 Open the researcher dashboard, enter the separate `RESEARCHER_KEY`, and select
 **Connect secure backend**. Do not enter the DeepSeek API key in the webpage.
+The Worker URL is read-only in the dashboard and can be changed only through a
+reviewed update to `runtime-config.js`.
 
 ## Validation checklist
 
