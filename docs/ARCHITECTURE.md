@@ -21,8 +21,20 @@ credentials and the researcher access credential are encrypted Worker Secrets.
 
 ## Condition isolation
 
-The condition is read only when the Worker selects the fixed reaction template.
-It is never included in the coworker prompt or the joke-classifier prompt.
+At the joke slot, DeepSeek receives the language, joke, scenario, and recent
+canonical conversation, then generates a matched counterfactual set containing:
+
+- a short negative prefix;
+- a short neutral prefix;
+- a short polite-positive prefix; and
+- one context-specific, condition-neutral work follow-up.
+
+The reaction prompt generates all three candidates together and does not receive
+the assigned condition. The server validates valence, weak-versus-strong
+positivity, neutral contamination, shared-follow-up neutrality, and approximate
+length balance. Only after validation does the server read the condition and
+select one candidate. Fixed researcher-editable templates are emergency
+fallbacks, not the normal response path.
 
 Every nonmanipulated component is shared:
 
@@ -36,10 +48,11 @@ Every nonmanipulated component is shared:
 - maximum message count; and
 - error handling.
 
-Participant-visible history stores the actual reaction. DeepSeek history stores
-the same canonical return-to-work sentence in all conditions. This prevents the
-manipulation wording from causing systematically colder or warmer later
-messages.
+Participant-visible history stores the selected contextual reaction. DeepSeek
+history stores only the dynamically generated shared follow-up, which is
+identical across the three counterfactual candidates for that session. This
+prevents the manipulation prefix from causing systematically colder or warmer
+later messages.
 
 ## Assignment
 
@@ -67,8 +80,9 @@ humor, refusal, clarification, or other without seeing the condition.
 
 The classifier is an audit and protocol-deviation check, not a funniness judge.
 A refusal or clarification keeps the window open. The next substantive message
-triggers the fixed reaction, reducing differential misclassification of Chinese
-puns, English jokes, and culturally specific humor.
+triggers generation and selection of the matched reaction set, reducing
+differential misclassification of Chinese puns, English jokes, and culturally
+specific humor.
 
 Automatic demo mode may use high-confidence `attempted_humor` classification as
 the trigger, but should not replace the staged protocol in confirmatory data

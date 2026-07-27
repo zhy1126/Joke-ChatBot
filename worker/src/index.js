@@ -158,6 +158,8 @@ async function routeRequest(request, env) {
       const result = await processParticipantMessage(session, body.text, {
         classifyJoke: (input) => classifyJoke(env, input),
         generateReply: (input) => generateCoworkerReply(env, input),
+        generateReactionSet: (input) =>
+          generateContextualReactionSet(env, input),
         maximumMessages: Number(env.MAX_SESSION_MESSAGES) || 24,
       });
       await updateSession(env, result.session);
@@ -243,11 +245,27 @@ async function generateCoworkerReply(env, input) {
   });
 }
 
+async function generateContextualReactionSet(env, input) {
+  const content = await callDeepSeek(env, {
+    messages: input.messages,
+    maxTokens: 320,
+    temperature: 0.2,
+    responseFormat: { type: "json_object" },
+    userId: safeUserId(input.sessionId),
+  });
+  try {
+    return JSON.parse(stripCodeFence(content));
+  } catch {
+    return null;
+  }
+}
+
 async function callDeepSeek(
   env,
   { messages, maxTokens, temperature, responseFormat, userId },
 ) {
-  if (!env.DEEPSEEK_API_KEY) {
+  const apiKey = await resolveSecret(env.DEEPSEEK_API_KEY);
+  if (!apiKey) {
     throw new ExperimentError(503, "The language model is not configured.");
   }
   const baseUrl = String(env.DEEPSEEK_BASE_URL || DEFAULT_BASE_URL).replace(
@@ -275,7 +293,7 @@ async function callDeepSeek(
     response = await fetch(`${baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${env.DEEPSEEK_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
@@ -299,6 +317,15 @@ async function callDeepSeek(
     throw new ExperimentError(502, "The language model returned no text.");
   }
   return content.trim();
+}
+
+async function resolveSecret(binding) {
+  if (typeof binding === "string") return binding.trim();
+  if (binding && typeof binding.get === "function") {
+    const value = await binding.get();
+    return typeof value === "string" ? value.trim() : "";
+  }
+  return "";
 }
 
 async function insertSession(env, session) {

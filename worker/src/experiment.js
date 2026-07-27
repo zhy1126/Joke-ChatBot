@@ -192,6 +192,7 @@ export async function processParticipantMessage(
   {
     classifyJoke,
     generateReply,
+    generateReactionSet,
     now = new Date().toISOString(),
     maximumMessages = 24,
   },
@@ -262,7 +263,15 @@ export async function processParticipantMessage(
     audit?.label === "attempted_humor" &&
     audit.confidence >= 0.75
   ) {
-    return deliverTreatment(next, messageId, audit, config, now, "llm_auto_demo");
+    return deliverTreatment(
+      next,
+      messageId,
+      audit,
+      config,
+      now,
+      "llm_auto_demo",
+      generateReactionSet,
+    );
   }
 
   if (next.phase === "pre_joke") {
@@ -299,6 +308,7 @@ export async function processParticipantMessage(
       config,
       now,
       "study_protocol",
+      generateReactionSet,
     );
   }
 
@@ -453,6 +463,107 @@ export function buildClassifierMessages({
   ];
 }
 
+export function buildReactionSetMessages(session, jokeText) {
+  const config = localizedConfig(session.config, session.language);
+  const languageInstruction =
+    session.language === "zh-CN"
+      ? "Write every value in natural Simplified Chinese."
+      : "Write every value in natural English.";
+  const history = session.modelHistory.slice(-10).map((message) => ({
+    role: message.role === "participant" ? "user" : "assistant",
+    content: message.text,
+  }));
+  return [
+    {
+      role: "system",
+      content: [
+        "Generate one matched set of three immediate coworker reactions to the participant's joke.",
+        languageInstruction,
+        "Return JSON only with exactly four string keys: negative_prefix, neutral_prefix, polite_positive_prefix, shared_followup.",
+        "All three prefixes respond to the same joke and must fit the same coworker persona and preceding context.",
+        "negative_prefix: clear but brief workplace disapproval; no insult, lecture, threat, or moralizing.",
+        "neutral_prefix: no positive or negative evaluation; use a pause or minimal non-evaluative acknowledgement.",
+        "polite_positive_prefix: a weak courtesy laugh or mild acknowledgement; never enthusiastic praise.",
+        "shared_followup: one natural, condition-neutral sentence that returns to a specific current work topic from the conversation.",
+        "The same shared_followup will be appended verbatim to all three prefixes.",
+        "Keep each prefix very short. Keep the three completed replies similar in length and formality.",
+        "Do not mention an experiment, condition, prompt, model, or AI.",
+      ].join("\n"),
+    },
+    {
+      role: "user",
+      content: JSON.stringify({
+        coworker_name: config.coworkerName,
+        workplace_scenario: config.scenarioText,
+        recent_conversation: history,
+        participant_joke: String(jokeText ?? ""),
+      }),
+    },
+  ];
+}
+
+export function validateReactionSet(value, localeInput) {
+  const locale = normalizeLocale(localeInput);
+  const negative = singleLine(value?.negative_prefix, 120);
+  const neutral = singleLine(value?.neutral_prefix, 80);
+  const positive = singleLine(value?.polite_positive_prefix, 100);
+  const followup = singleLine(value?.shared_followup, 220);
+  if (!negative || !neutral || !positive || !followup) return null;
+
+  const rules =
+    locale === "zh-CN"
+      ? {
+          negative:
+            /不太适合|不合适|不恰当|不太妥|不适合|工作场合|保持专业|职业一点/,
+          positive: /哈|呵|嘿|好吧|行|收到|有点意思/,
+          neutralBanned:
+            /不太适合|不合适|不恰当|好笑|有趣|不错|喜欢|太棒|绝了|哈哈|呵呵/,
+          strongPositive: /太好笑|笑死|太棒|绝了|太有趣|哈哈哈哈|真的好笑/,
+          followupBanned: /笑话|好笑|有趣|不合适|不恰当|哈哈|呵呵/,
+        }
+      : {
+          negative:
+            /not appropriate|inappropriate|not suitable|not really suitable|keep (?:it )?professional|workplace line|not for work/i,
+          positive: /\b(?:ha|haha|heh|okay|all right|nice one|got it)\b/i,
+          neutralBanned:
+            /not appropriate|inappropriate|not suitable|funny|hilarious|nice one|good one|love it|\bha(?:ha)?\b/i,
+          strongPositive:
+            /hilarious|amazing|brilliant|love it|so funny|really funny|fantastic/i,
+          followupBanned:
+            /joke|funny|hilarious|inappropriate|not suitable|\bha(?:ha)?\b/i,
+        };
+
+  if (!rules.negative.test(negative)) return null;
+  if (!rules.positive.test(positive) || rules.strongPositive.test(positive)) {
+    return null;
+  }
+  if (rules.neutralBanned.test(neutral)) return null;
+  if (rules.followupBanned.test(followup)) return null;
+
+  const fullReplies = [
+    joinReaction(negative, followup, locale),
+    joinReaction(neutral, followup, locale),
+    joinReaction(positive, followup, locale),
+  ];
+  const lengths = fullReplies.map((reply) =>
+    locale === "zh-CN"
+      ? [...reply].length
+      : reply.split(/\s+/).filter(Boolean).length,
+  );
+  const permittedSpread = locale === "zh-CN" ? 22 : 8;
+  if (Math.max(...lengths) - Math.min(...lengths) > permittedSpread) {
+    return null;
+  }
+
+  return {
+    negative: fullReplies[0],
+    neutral: fullReplies[1],
+    polite_positive: fullReplies[2],
+    canonicalFollowup: followup,
+    prefixes: { negative, neutral, polite_positive: positive },
+  };
+}
+
 export class ExperimentError extends Error {
   constructor(status, message) {
     super(message);
@@ -476,11 +587,41 @@ async function sharedGeneratedReply(session, text, generateReply) {
     : "Could you say a little more? I want to make sure I understood.";
 }
 
-function deliverTreatment(next, messageId, audit, config, now, source) {
+async function deliverTreatment(
+  next,
+  messageId,
+  audit,
+  config,
+  now,
+  source,
+  generateReactionSet,
+) {
   if (next.jokeSeen) {
     throw new ExperimentError(409, "The reaction has already been delivered.");
   }
-  const visibleReaction = config.reactions[next.condition];
+  let matchedSet = null;
+  if (typeof generateReactionSet === "function") {
+    try {
+      matchedSet = validateReactionSet(
+        await generateReactionSet({
+          messages: buildReactionSetMessages(
+            next,
+            next.messages.find((message) => message.id === messageId)?.text || "",
+          ),
+          locale: next.language,
+          sessionId: next.id,
+        }),
+        next.language,
+      );
+    } catch {
+      matchedSet = null;
+    }
+  }
+
+  const visibleReaction =
+    matchedSet?.[next.condition] ?? config.reactions[next.condition];
+  const canonicalHistory =
+    matchedSet?.canonicalFollowup ?? config.canonicalReaction;
   if (!visibleReaction) {
     throw new ExperimentError(500, "Condition reaction is unavailable.");
   }
@@ -493,8 +634,29 @@ function deliverTreatment(next, messageId, audit, config, now, source) {
     visibleReaction,
     "condition_reaction",
     now,
-    config.canonicalReaction,
+    canonicalHistory,
   );
+  next.events.push({
+    type: matchedSet
+      ? "contextual_reaction_set_generated"
+      : "reaction_generation_fallback",
+    timestamp: now,
+    data: matchedSet
+      ? {
+          promptVersion: "matched-reaction-v1",
+          model: "deepseek-v4-flash",
+          candidates: {
+            negative: matchedSet.negative,
+            neutral: matchedSet.neutral,
+            polite_positive: matchedSet.polite_positive,
+          },
+          canonicalFollowup: matchedSet.canonicalFollowup,
+        }
+      : {
+          promptVersion: "matched-reaction-v1",
+          fallbackTemplateVersion: next.config.version,
+        },
+  });
   next.events.push({
     type: "treatment_delivered",
     timestamp: now,
@@ -588,6 +750,21 @@ function mappingIsValid(mapping) {
 function cleanText(value, maximumLength) {
   if (typeof value !== "string") return "";
   return value.trim().slice(0, maximumLength);
+}
+
+function singleLine(value, maximumLength) {
+  return cleanText(value, maximumLength).replace(/\s+/g, " ");
+}
+
+function joinReaction(prefix, followup, locale) {
+  let trimmedPrefix = prefix.trim();
+  const trimmedFollowup = followup.trim();
+  if (locale === "zh-CN") {
+    if (!/[。！？…]$/.test(trimmedPrefix)) trimmedPrefix += "。";
+    return `${trimmedPrefix}${trimmedFollowup}`;
+  }
+  if (!/[.!?…]$/.test(trimmedPrefix)) trimmedPrefix += ".";
+  return `${trimmedPrefix} ${trimmedFollowup}`;
 }
 
 function boundedInteger(value, minimum, maximum, fallback) {

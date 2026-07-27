@@ -252,9 +252,15 @@
               </fieldset>
 
               <fieldset>
-                <legend>Condition reactions</legend>
+                <legend>Contextual AI reaction controls</legend>
+                <p class="fieldset-note">
+                  DeepSeek generates three matched, context-aware candidate
+                  reactions in the participant’s language. The server displays only
+                  the assigned candidate. The wording below is used only as a
+                  validated fallback if generation fails.
+                </p>
                 <label class="condition-field negative-field">
-                  <span><b>Negative</b> · clear disapproval</span>
+                  <span><b>Negative fallback</b> · clear disapproval</span>
                   <textarea id="negative-reaction" name="negativeReaction" rows="2"></textarea>
                 </label>
                 <label class="condition-field negative-field">
@@ -262,7 +268,7 @@
                   <textarea id="negative-reaction-zh" name="negativeReactionZh" rows="2"></textarea>
                 </label>
                 <label class="condition-field neutral-field">
-                  <span><b>Neutral</b> · no clear evaluation</span>
+                  <span><b>Neutral fallback</b> · no clear evaluation</span>
                   <textarea id="neutral-reaction" name="neutralReaction" rows="2"></textarea>
                 </label>
                 <label class="condition-field neutral-field">
@@ -270,7 +276,7 @@
                   <textarea id="neutral-reaction-zh" name="neutralReactionZh" rows="2"></textarea>
                 </label>
                 <label class="condition-field positive-field">
-                  <span><b>Polite-positive</b> · courteous weak approval</span>
+                  <span><b>Polite-positive fallback</b> · courteous weak approval</span>
                   <textarea
                     id="positive-reaction"
                     name="positiveReaction"
@@ -286,7 +292,7 @@
                   ></textarea>
                 </label>
                 <label>
-                  Canonical post-reaction text sent to the dialogue engine
+                  Canonical fallback sent to the dialogue engine
                   <textarea
                     id="canonical-reaction"
                     name="canonicalReaction"
@@ -294,7 +300,7 @@
                   ></textarea>
                 </label>
                 <label>
-                  Canonical post-reaction text · 中文
+                  Canonical fallback · 中文
                   <textarea
                     id="canonical-reaction-zh"
                     name="canonicalReactionZh"
@@ -381,7 +387,7 @@
               </div>
               <ul>
                 <li><span>✓</span> One shared coworker persona</li>
-                <li><span>✓</span> Server-style fixed reaction slot</li>
+                <li><span>✓</span> Context-aware matched reaction set</li>
                 <li><span>✓</span> Condition-blind joke audit</li>
                 <li><span>✓</span> Canonical post-reaction history</li>
                 <li><span>✓</span> One treatment delivery per session</li>

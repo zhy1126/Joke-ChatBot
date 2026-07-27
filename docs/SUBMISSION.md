@@ -26,13 +26,16 @@ requests keep the window open; the next substantive response is treated as the
 target joke message. This staged signal is more reproducible across languages
 than relying on an unrestricted humor detector.
 
-Only the immediate reaction is manipulated. The server selects one fixed,
-language-matched template: clear disapproval, no clear evaluation, or weak
-courteous approval. Persona, prompt, model, generation parameters, timing,
-conversation stages, survey, and error handling remain shared. The participant
-history contains the actual reaction, but the model history replaces it with
-the same canonical return-to-work sentence in all conditions. This prevents the
-manipulation from changing subsequent generated tone.
+Only the immediate reaction is manipulated. At the joke slot, DeepSeek uses the
+same preceding context and participant language to generate three matched
+counterfactual prefixes—clear disapproval, no evaluation, and weak courteous
+approval—plus one shared, context-specific return-to-work sentence. The server
+validates valence, strength, length balance, and follow-up neutrality, then
+reveals only the assigned candidate. Fixed templates are used only if generation
+or validation fails. Persona, model, timing, conversation stages, survey, and
+error handling remain shared. Participant history contains the selected
+reaction; model history retains only the common dynamic follow-up, preventing
+the manipulation prefix from changing later generated tone.
 
 The GitHub Pages frontend contains no provider credentials. A Cloudflare Worker
 stores the DeepSeek key as an encrypted secret, while D1 stores condition
@@ -50,7 +53,7 @@ The participant messages are identical in all three examples.
 **Participant:** The appendix is ready now.  
 **Alex:** We’ve been looking at this report for a while. You mentioned you had a quick joke—go on.  
 **Participant:** Why did the spreadsheet break up with the database? It had too many relationship problems.  
-**Alex:** That’s really not appropriate for work. Anyway, shall we get back to the report?  
+**Alex:** That’s not really suitable for work. Could you double-check the appendix totals while I finish the summary?
 
 ### Neutral
 
@@ -60,7 +63,7 @@ The participant messages are identical in all three examples.
 **Participant:** The appendix is ready now.  
 **Alex:** We’ve been looking at this report for a while. You mentioned you had a quick joke—go on.  
 **Participant:** Why did the spreadsheet break up with the database? It had too many relationship problems.  
-**Alex:** ... Anyway, shall we get back to the report?  
+**Alex:** ... Could you double-check the appendix totals while I finish the summary?
 
 ### Polite-positive
 
@@ -70,7 +73,7 @@ The participant messages are identical in all three examples.
 **Participant:** The appendix is ready now.  
 **Alex:** We’ve been looking at this report for a while. You mentioned you had a quick joke—go on.  
 **Participant:** Why did the spreadsheet break up with the database? It had too many relationship problems.  
-**Alex:** Haha... Anyway, shall we get back to the report?  
+**Alex:** Heh... Could you double-check the appendix totals while I finish the summary?
 
 ## Manipulation and AI-suspicion assessment
 

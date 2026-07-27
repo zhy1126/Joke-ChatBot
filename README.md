@@ -25,24 +25,29 @@ The public GitHub Pages address is:
 - Researcher manual assignment, balanced random assignment, and participant
   blind card choice.
 - A different secret A/B/C-to-condition mapping for every blind-choice session.
-- Server-only condition storage, reaction templates, model credentials, and
+- Server-only condition storage, matched reaction candidates, fallback
+  templates, model credentials, and
   experiment records.
 - Identical coworker prompt, persona, language policy, timing policy, and
   canonical post-reaction model history across conditions.
 - Participant-safe APIs that never return the condition, hidden mapping,
-  reaction templates, prompts, or model history.
+  counterfactual reaction candidates, prompts, or model history.
 
 In formal study mode, the classifier audits the message in the staged joke
 window. It does not judge whether the joke is funny, and it does not become a
 language-dependent treatment gate. A clear refusal or clarification keeps the
-joke window open; the next substantive joke attempt receives the fixed
-condition reaction.
+joke window open. For the next substantive joke attempt, DeepSeek generates all
+three context-aware reaction candidates plus one shared work-topic follow-up in
+a single JSON response. The server validates the set and displays only the
+assigned candidate. Fixed wording is retained solely as a failure fallback.
 
 ## Security boundary
 
 The DeepSeek API key must never be added to the site, entered in the researcher
-dashboard, committed to GitHub, or placed in `wrangler.toml`. It is stored only
-as the encrypted Worker Secret `DEEPSEEK_API_KEY`.
+dashboard, committed to GitHub, or placed in `wrangler.toml`. It is stored in
+Cloudflare Secrets Store under `API-Key` and exposed to the Worker only through
+the `DEEPSEEK_API_KEY` binding. The public store resource ID in the Wrangler
+configuration is not the secret value.
 
 The dashboard asks for a separate `RESEARCHER_KEY`. This authenticates
 researcher-only routes and is not the DeepSeek key. It is held in browser
@@ -80,6 +85,7 @@ The test suite covers:
 - English and Chinese wording;
 - condition absence from every DeepSeek prompt;
 - condition-blind joke classification;
+- contextual matched-triplet reaction generation and validation;
 - staged trigger behavior;
 - one-time treatment delivery;
 - canonicalized model history;

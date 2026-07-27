@@ -5,6 +5,7 @@ import { DEFAULT_CONFIG } from "../site/js/core.js";
 import {
   buildClassifierMessages,
   buildCoworkerMessages,
+  buildReactionSetMessages,
   createHiddenMapping,
   createServerSession,
   localizedConfig,
@@ -12,6 +13,7 @@ import {
   publicSession,
   resolveBlindChoice,
   startServerSession,
+  validateReactionSet,
 } from "../worker/src/experiment.js";
 
 const CLOCK = "2026-07-27T12:00:00.000Z";
@@ -76,6 +78,51 @@ test("condition is absent from coworker and classifier prompts", () => {
   );
   assert.doesNotMatch(coworkerPrompt, /negative|polite_positive/);
   assert.doesNotMatch(classifierPrompt, /negative|polite_positive/);
+});
+
+test("reaction prompt creates all counterfactual conditions from one shared context", () => {
+  const session = startServerSession(
+    resolveBlindChoice(makeBlindSession(), "A", CLOCK),
+    "zh-CN",
+    CLOCK,
+  );
+  const prompt = JSON.stringify(
+    buildReactionSetMessages(session, DEFAULT_CONFIG.targetJokeZh),
+  );
+  assert.match(prompt, /negative_prefix/);
+  assert.match(prompt, /neutral_prefix/);
+  assert.match(prompt, /polite_positive_prefix/);
+  assert.match(prompt, /shared_followup/);
+  assert.match(prompt, /下午|会议/);
+  assert.doesNotMatch(prompt, /"condition":"negative"/);
+});
+
+test("reaction validator accepts matched subtle reactions and rejects strong praise", () => {
+  const valid = validateReactionSet(
+    {
+      negative_prefix: "这个笑话不太适合工作场合。",
+      neutral_prefix: "……",
+      polite_positive_prefix: "哈哈……",
+      shared_followup: "我们接着检查附录中的数字吧。",
+    },
+    "zh-CN",
+  );
+  assert.ok(valid);
+  assert.equal(
+    valid.polite_positive,
+    "哈哈……我们接着检查附录中的数字吧。",
+  );
+
+  const invalid = validateReactionSet(
+    {
+      negative_prefix: "这个笑话不太适合工作场合。",
+      neutral_prefix: "……",
+      polite_positive_prefix: "太好笑了，简直绝了！",
+      shared_followup: "我们接着检查附录中的数字吧。",
+    },
+    "zh-CN",
+  );
+  assert.equal(invalid, null);
 });
 
 test("DeepSeek-generated ordinary replies are used before the joke", async () => {
@@ -170,6 +217,56 @@ test("formal staged treatment still works when the audit classifier is unavailab
     result.session.events.some(
       (event) => event.type === "joke_classifier_unavailable",
     ),
+    true,
+  );
+});
+
+test("assigned condition selects one AI-generated contextual candidate", async () => {
+  let session = startServerSession(
+    resolveBlindChoice(makeBlindSession(), "C", CLOCK),
+    "zh-CN",
+    CLOCK,
+  );
+  session.config.preJokeTurns = 1;
+  session = (
+    await processParticipantMessage(session, "附录已经整理好了。", {
+      now: CLOCK,
+      classifyJoke: async () => ({ label: "other", confidence: 0.9 }),
+      generateReply: async () => "unused",
+    })
+  ).session;
+  const result = await processParticipantMessage(
+    session,
+    DEFAULT_CONFIG.targetJokeZh,
+    {
+      now: CLOCK,
+      classifyJoke: async () => ({
+        label: "attempted_humor",
+        confidence: 0.96,
+      }),
+      generateReply: async () => "unused",
+      generateReactionSet: async () => ({
+        negative_prefix: "这个笑话不太适合工作场合。",
+        neutral_prefix: "……",
+        polite_positive_prefix: "哈哈……",
+        shared_followup: "我们接着检查附录中的数字吧。",
+      }),
+    },
+  );
+  assert.equal(
+    result.reply,
+    "哈哈……我们接着检查附录中的数字吧。",
+  );
+  assert.equal(
+    result.session.modelHistory.at(-1).text,
+    "我们接着检查附录中的数字吧。",
+  );
+  const generatedEvent = result.session.events.find(
+    (event) => event.type === "contextual_reaction_set_generated",
+  );
+  assert.equal(generatedEvent.data.candidates.negative.includes("不太适合"), true);
+  assert.equal(
+    generatedEvent.data.candidates.polite_positive.includes("哈哈"),
     true,
   );
 });

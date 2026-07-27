@@ -13,13 +13,21 @@ test("Worker provides a secure Chinese blind-choice conversation flow", async ()
   globalThis.fetch = async (_url, options) => {
     const payload = JSON.parse(options.body);
     deepSeekPayloads.push(payload);
-    const content = payload.response_format
+    const systemPrompt = payload.messages?.[0]?.content || "";
+    const content = systemPrompt.includes("matched set")
       ? JSON.stringify({
+          negative_prefix: "这个笑话不太适合工作场合。",
+          neutral_prefix: "……",
+          polite_positive_prefix: "哈哈……",
+          shared_followup: "我们接着核对附录里的数字吧。",
+        })
+      : payload.response_format
+        ? JSON.stringify({
           label: "attempted_humor",
           confidence: 0.98,
           reason: "participant supplied a punchline",
         })
-      : "好的，我会再核对一下表格标题。";
+        : "好的，我会再核对一下表格标题。";
     return new Response(
       JSON.stringify({ choices: [{ message: { content } }] }),
       {
@@ -34,7 +42,11 @@ test("Worker provides a secure Chinese blind-choice conversation flow", async ()
 
   const env = {
     DB: database,
-    DEEPSEEK_API_KEY: "test-only-placeholder",
+    DEEPSEEK_API_KEY: {
+      async get() {
+        return "test-only-placeholder";
+      },
+    },
     RESEARCHER_KEY: "researcher-test-key",
     DEEPSEEK_MODEL: "deepseek-v4-flash",
     ALLOWED_ORIGINS: ORIGIN,
@@ -95,9 +107,9 @@ test("Worker provides a secure Chinese blind-choice conversation flow", async ()
     assert.equal(treatment.body.session.phase, "post_joke");
     assert.equal(
       [
-        DEFAULT_CONFIG.negativeReactionZh,
-        DEFAULT_CONFIG.neutralReactionZh,
-        DEFAULT_CONFIG.positiveReactionZh,
+        "这个笑话不太适合工作场合。我们接着核对附录里的数字吧。",
+        "……我们接着核对附录里的数字吧。",
+        "哈哈……我们接着核对附录里的数字吧。",
       ].includes(treatment.body.reply),
       true,
     );

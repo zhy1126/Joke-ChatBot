@@ -38,17 +38,30 @@ Apply the schema:
 npm run worker:migrate:remote
 ```
 
-## 2. Add encrypted secrets
+## 2. Bind the encrypted DeepSeek secret
 
-Both commands prompt interactively. Values are not written to the repository:
+This repository is configured for the account-level Cloudflare Secrets Store
+shown in `worker/wrangler.toml`:
+
+- binding variable: `DEEPSEEK_API_KEY`;
+- store resource ID: the non-secret ID copied from the Cloudflare URL; and
+- account secret name: `API-Key`.
+
+In Cloudflare, confirm that `API-Key` has the **Workers** permission scope and
+contains a newly rotated DeepSeek key. The Worker reads the value asynchronously
+through the binding; the value is never written to this repository.
+
+Create the separate researcher credential as a per-Worker encrypted secret.
+This command prompts interactively:
 
 ```bash
-npx wrangler secret put DEEPSEEK_API_KEY --config worker/wrangler.toml
 npx wrangler secret put RESEARCHER_KEY --config worker/wrangler.toml
 ```
 
-Use a newly rotated DeepSeek key for the first secret. Use a different long,
-random value for `RESEARCHER_KEY`.
+Use a different long, random value for `RESEARCHER_KEY`. If the account-level
+store binding is not desired, remove `[[secrets_store_secrets]]` and create
+`DEEPSEEK_API_KEY` with `wrangler secret put` instead; the Worker supports both
+forms.
 
 ## 3. Deploy the Worker
 
@@ -90,7 +103,10 @@ reviewed update to `runtime-config.js`.
 - Open its participant link in a separate browser profile.
 - Confirm the participant sees A/B/C but no condition terminology.
 - Choose Chinese and verify the opening and ordinary responses are Chinese.
-- Reach the joke stage and verify exactly one fixed reaction is delivered.
+- Reach the joke stage and verify exactly one context-aware reaction is
+  delivered.
+- Confirm the researcher export contains all three generated candidates and one
+  shared canonical follow-up for audit.
 - Verify the researcher export contains the condition and chosen card.
 - Inspect the participant network responses and confirm no condition or mapping
   appears.
