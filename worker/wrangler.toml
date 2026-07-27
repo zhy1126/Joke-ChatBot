@@ -1,4 +1,4 @@
-name = "joke-chatbot-api"
+name = "jokechatbot"
 main = "src/index.js"
 compatibility_date = "2026-07-27"
 workers_dev = true
@@ -17,9 +17,8 @@ binding = "DEEPSEEK_API_KEY"
 store_id = "dc1da4aac8a84f9a9abc1d7da761af2e"
 secret_name = "API-Key"
 
-# Run `npx wrangler d1 create joke-chatbot` and replace this placeholder.
+# Wrangler 4.45+ automatically provisions this D1 resource on first deploy.
+# The binding name is also used by the migration command.
 [[d1_databases]]
 binding = "DB"
-database_name = "joke-chatbot"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
 migrations_dir = "migrations"

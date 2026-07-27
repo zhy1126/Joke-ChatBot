@@ -8,8 +8,9 @@
     "test": "node --test",
     "check": "node --check site/js/core.js && node --check site/js/app.js && node --check site/js/remote-api.js && node --check site/js/remote-app.js && node --check worker/src/experiment.js && node --check worker/src/index.js",
     "worker:dev": "npx wrangler dev --config worker/wrangler.toml",
-    "worker:migrate:local": "npx wrangler d1 migrations apply joke-chatbot --local --config worker/wrangler.toml",
-    "worker:migrate:remote": "npx wrangler d1 migrations apply joke-chatbot --remote --config worker/wrangler.toml"
+    "worker:migrate:local": "npx wrangler d1 migrations apply DB --local --config worker/wrangler.toml",
+    "worker:migrate:remote": "npx wrangler d1 migrations apply DB --remote --config worker/wrangler.toml",
+    "worker:deploy": "npx wrangler deploy --config worker/wrangler.toml && npx wrangler d1 migrations apply DB --remote --config worker/wrangler.toml"
   },
   "engines": {
     "node": ">=20"

@@ -21,22 +21,12 @@ Install Node.js and sign in to a Cloudflare account:
 npx wrangler login
 ```
 
-## 1. Create D1
+## 1. Provision D1
 
-From the repository root:
-
-```bash
-npx wrangler d1 create joke-chatbot
-```
-
-Copy the returned database ID into `worker/wrangler.toml`, replacing
-`REPLACE_WITH_D1_DATABASE_ID`.
-
-Apply the schema:
-
-```bash
-npm run worker:migrate:remote
-```
+The D1 binding in `worker/wrangler.toml` intentionally contains only
+`binding = "DB"`. Wrangler 4.45 or newer automatically provisions and binds the
+database on the first deployment. After deployment, the migration command uses
+the binding name `DB`, so no account-specific database ID needs to be committed.
 
 ## 2. Bind the encrypted DeepSeek secret
 
@@ -66,8 +56,13 @@ forms.
 ## 3. Deploy the Worker
 
 ```bash
-npx wrangler deploy --config worker/wrangler.toml
+npm run worker:deploy
 ```
+
+For Cloudflare Workers Builds connected to this GitHub repository, leave the
+optional build command blank and use `npm run worker:deploy` as the deploy
+command. The script deploys first so D1 can be provisioned, then applies the
+tracked schema migration.
 
 Copy the resulting HTTPS Worker URL and verify:
 
