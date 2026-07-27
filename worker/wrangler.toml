@@ -9,6 +9,9 @@ DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 DEEPSEEK_MODEL = "deepseek-v4-flash"
 DEEPSEEK_TIMEOUT_MS = "20000"
 MAX_SESSION_MESSAGES = "24"
+PUBLIC_EVALUATOR_DAILY_LIMIT = "30"
+PUBLIC_EVALUATOR_CLIENT_DAILY_LIMIT = "3"
+PUBLIC_EVALUATOR_MAX_MESSAGES = "8"
 
 # `npm run worker:deploy` resolves or creates jokechatbot-db and writes its UUID
 # into the ignored worker/wrangler.deploy.toml file before deployment.
