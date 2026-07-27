@@ -76,6 +76,11 @@ export function createRemoteApi(settings) {
 
   return {
     health: () => request("/api/health"),
+    createEvaluatorSession: (condition, language) =>
+      request("/api/evaluator/sessions", {
+        method: "POST",
+        body: { condition, language },
+      }),
     listSessions: () => request("/api/admin/sessions", {}, true),
     createSession: (body) =>
       request(
