@@ -294,6 +294,19 @@ function createResearchSession() {
     return;
   }
   const participantCode = byId("participant-code").value.trim();
+  if (assignment === "qa_triplet") {
+    for (const condition of CONDITIONS) {
+      createAndStoreSession(
+        condition,
+        `${participantCode || "QA"}-${condition}`,
+        "qa",
+      );
+    }
+    byId("participant-code").value = "";
+    renderResearcherState();
+    showToast("QA test pack created: one session per condition.");
+    return;
+  }
   const session = createAndStoreSession(assignment, participantCode);
   byId("participant-code").value = "";
   renderResearcherState();
@@ -302,7 +315,11 @@ function createResearchSession() {
   );
 }
 
-function createAndStoreSession(assignment, participantCode) {
+function createAndStoreSession(
+  assignment,
+  participantCode,
+  sessionPurpose = "research",
+) {
   const sessions = readSessions();
   const condition = CONDITIONS.includes(assignment)
     ? assignment
@@ -310,6 +327,7 @@ function createAndStoreSession(assignment, participantCode) {
   const session = createSession({
     condition,
     participantCode,
+    sessionPurpose,
     config: readConfig(),
   });
   sessions.unshift(session);
@@ -320,12 +338,15 @@ function createAndStoreSession(assignment, participantCode) {
 function renderResearcherState() {
   const config = readConfig();
   const sessions = readSessions();
-  byId("metric-total").textContent = String(sessions.length);
+  const researchSessions = sessions.filter(
+    (session) => session.sessionPurpose !== "qa",
+  );
+  byId("metric-total").textContent = String(researchSessions.length);
   byId("metric-treated").textContent = String(
-    sessions.filter((session) => session.jokeSeen).length,
+    researchSessions.filter((session) => session.jokeSeen).length,
   );
   byId("metric-surveys").textContent = String(
-    sessions.filter((session) => session.survey).length,
+    researchSessions.filter((session) => session.survey).length,
   );
   byId("metric-mode").textContent =
     config.triggerMode === "study" ? "Study" : "Auto demo";
@@ -338,7 +359,7 @@ function renderResearcherState() {
     const row = document.createElement("tr");
     const statusClass = session.status === "completed" ? " completed" : "";
     row.innerHTML = `
-      <td><span class="session-id">${escapeHtml(session.id)}</span></td>
+      <td><span class="session-id">${escapeHtml(session.id)}</span>${session.sessionPurpose === "qa" ? "<small>QA test</small>" : ""}</td>
       <td>${escapeHtml(session.participantCode || "—")}</td>
       <td>
         <span class="condition-pill ${CONDITION_CLASSES[session.condition]}">
