@@ -110,6 +110,7 @@ function bindResearcherEvents() {
     event.preventDefault();
     const previous = readConfig();
     const config = normalizeConfig({
+      ...previous,
       ...readConfigurationForm(),
       version: previous.version + 1,
       updatedAt: new Date().toISOString(),
@@ -241,7 +242,6 @@ function readConfigurationForm() {
     scenarioText: byId("scenario-text").value,
     scenarioTextZh: byId("scenario-text-zh").value,
     openingMessage: byId("opening-message").value,
-    openingMessageZh: byId("opening-message-zh").value,
     triggerMode: byId("trigger-mode").value,
     preJokeTurns: byId("pre-joke-turns").value,
     jokeCue: byId("joke-cue").value,
@@ -267,7 +267,6 @@ function renderConfiguration(config) {
   byId("scenario-text").value = config.scenarioText;
   byId("scenario-text-zh").value = config.scenarioTextZh;
   byId("opening-message").value = config.openingMessage;
-  byId("opening-message-zh").value = config.openingMessageZh;
   byId("trigger-mode").value = config.triggerMode;
   byId("pre-joke-turns").value = config.preJokeTurns;
   byId("joke-cue").value = config.jokeCue;
