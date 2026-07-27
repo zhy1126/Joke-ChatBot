@@ -1,67 +1,75 @@
-# Prototype architecture
+# Architecture and experimental-control invariants
 
-## Design invariant
-
-The experimental condition may affect only the fixed reaction returned after the
-target joke. `condition` is read by the reaction lookup and by the researcher-only
-monitor. It is not used by common dialogue, joke auditing, fallback messages, survey
-questions, timing policy, or the canonical model history.
-
-## Two histories
-
-Each session stores:
-
-- `messages`: exactly what the participant saw;
-- `modelHistory`: the dialogue-engine context.
-
-The condition reaction is present in `messages`. In `modelHistory`, it is replaced
-with `canonicalReaction`, which is identical across conditions. This prevents the
-manipulation wording from making later generated dialogue systematically colder or
-warmer.
-
-## State machine
+## Production path
 
 ```text
-created
-  -> pre_joke
-  -> joke_window
-  -> post_joke
-  -> survey_ready
-  -> completed
+Participant or researcher browser
+        |
+        v
+GitHub Pages frontend
+        |
+        v
+Cloudflare Worker API
+   |                 |
+   v                 v
+D1 session store   DeepSeek V4 Flash
 ```
 
-The treatment-delivery transition is locked by `jokeSeen`, so subsequent jokes cannot
-trigger a second experimental reaction.
+The browser receives an opaque participant token. D1 stores the real condition,
+blind-card mapping, prompts, messages, events, and survey record. DeepSeek
+credentials and the researcher access credential are encrypted Worker Secrets.
 
-## Trigger modes
+## Condition isolation
 
-### Study mode
+The condition is read only when the Worker selects the fixed reaction template.
+It is never included in the coworker prompt or the joke-classifier prompt.
 
-The common joke invitation opens `joke_window`. The first nonempty substantive
-message that is not a refusal, clarification, or meta-probe triggers the reaction.
-The condition-blind detector produces an audit label but does not decide treatment.
+Every nonmanipulated component is shared:
 
-### Automatic demo mode
+- coworker persona and role;
+- English/Chinese language policy;
+- system prompt and generation parameters;
+- joke classifier;
+- pre-joke and post-joke state transitions;
+- response delays;
+- survey;
+- maximum message count; and
+- error handling.
 
-A condition-blind heuristic can trigger a likely joke. This mode demonstrates the
-future automatic detector boundary but is not suitable for formal data collection.
-The production backend can replace it with a structured-output LLM classifier without
-changing the state machine.
+Participant-visible history stores the actual reaction. DeepSeek history stores
+the same canonical return-to-work sentence in all conditions. This prevents the
+manipulation wording from causing systematically colder or warmer later
+messages.
 
-## Static-hosting boundary
+## Assignment
 
-The browser application deliberately implements the complete user flow without
-secrets or external services. GitHub Pages cannot provide:
+The server supports:
 
-- secure condition concealment against developer-tools inspection;
-- protected API credentials;
-- cross-device session persistence;
-- researcher authentication;
-- authoritative concurrency and idempotency controls.
+- `researcher_manual`;
+- `balanced_random`; and
+- `participant_blind`.
 
-The production backend should implement opaque participant tokens, authenticated
-researcher routes, a database transaction around message processing, server-side LLM
-calls, input/output validation, and anonymous export.
+For blind choice, the Worker creates a fresh random permutation from A/B/C to
+the three conditions. The participant chooses one visually identical card. The
+server resolves and locks the condition; neither the mapping nor the result is
+returned through participant APIs.
 
-The static prototype remains useful for UI testing, wording pilots, matched
-transcript generation, questionnaire revision, and demonstration to assessors.
+Balanced random assignment remains the preferred formal-study default because
+literal participant choice can introduce selection effects. The per-session
+secret permutation prevents a general preference for A, B, or C from
+systematically selecting a reaction condition.
+
+## Joke signal
+
+Formal study mode opens a `joke_window` after the same number of participant
+turns and the same invitation. DeepSeek classifies the next message as attempted
+humor, refusal, clarification, or other without seeing the condition.
+
+The classifier is an audit and protocol-deviation check, not a funniness judge.
+A refusal or clarification keeps the window open. The next substantive message
+triggers the fixed reaction, reducing differential misclassification of Chinese
+puns, English jokes, and culturally specific humor.
+
+Automatic demo mode may use high-confidence `attempted_humor` classification as
+the trigger, but should not replace the staged protocol in confirmatory data
+collection without a separately validated bilingual classifier benchmark.
