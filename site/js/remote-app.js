@@ -72,7 +72,7 @@ function bindResearcherEvents(api, settings) {
   byId("create-session-side").addEventListener("click", create);
   byId("preview-button").addEventListener("click", async () => {
     const payload = await api.createSession({
-      assignmentMethod: "balanced_random",
+      assignmentMethod: "participant_blind",
       participantCode: "PREVIEW",
       config: readConfig(),
     });

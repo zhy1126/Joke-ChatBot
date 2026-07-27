@@ -350,8 +350,8 @@
               <label>
                 Condition assignment
                 <select id="condition-assignment">
+                  <option value="participant_blind" selected>Participant blind card choice</option>
                   <option value="random">Balanced random assignment</option>
-                  <option value="participant_blind">Participant blind card choice</option>
                   <option value="negative">Negative</option>
                   <option value="neutral">Neutral</option>
                   <option value="polite_positive">Polite-positive</option>
@@ -369,7 +369,8 @@
                 Create participant session
               </button>
               <p class="helper-text">
-                The assigned condition is locked when the session is created and is
+                The condition is locked on the server before the conversation begins,
+                either at assignment or after a blind A/B/C card choice. Its meaning is
                 never shown in the participant interface.
               </p>
             </section>

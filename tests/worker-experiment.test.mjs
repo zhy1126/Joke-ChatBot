@@ -78,6 +78,10 @@ test("condition is absent from coworker and classifier prompts", () => {
   );
   assert.doesNotMatch(coworkerPrompt, /negative|polite_positive/);
   assert.doesNotMatch(classifierPrompt, /negative|polite_positive/);
+  assert.match(coworkerPrompt, /Never initiate humor/);
+  assert.match(coworkerPrompt, /do not evaluate it/);
+  assert.match(classifierPrompt, /do not require an exact match/);
+  assert.match(classifierPrompt, /even when obscure or unfunny/);
 });
 
 test("reaction prompt creates all counterfactual conditions from one shared context", () => {
@@ -94,6 +98,10 @@ test("reaction prompt creates all counterfactual conditions from one shared cont
   assert.match(prompt, /polite_positive_prefix/);
   assert.match(prompt, /shared_followup/);
   assert.match(prompt, /下午|会议/);
+  assert.match(prompt, /matched counterfactuals/);
+  assert.match(prompt, /not told which one will be displayed/);
+  assert.match(prompt, /same shared_followup will be appended verbatim/);
+  assert.match(prompt, /Do not repeat or explain the joke/);
   assert.doesNotMatch(prompt, /"condition":"negative"/);
 });
 
