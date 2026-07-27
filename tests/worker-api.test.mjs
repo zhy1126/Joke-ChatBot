@@ -102,7 +102,11 @@ test("Worker provides a secure Chinese blind-choice conversation flow", async ()
       method: "POST",
       body: { text: "附录也已经完成。" },
     });
-    assert.equal(second.body.reply, "好的，我会再核对一下表格标题。");
+    assert.equal(second.body.reply, "好的，明白了。那就先这样。");
+    assert.equal(
+      second.body.session.messages.at(-1).kind,
+      "shared_explicit_closure",
+    );
     assert.equal(second.body.session.status, "active");
     assert.equal("phase" in second.body.session, false);
     assert.equal(
@@ -139,7 +143,7 @@ test("Worker provides a secure Chinese blind-choice conversation flow", async ()
     const ordinaryDialogueCalls = deepSeekPayloads.filter((payload) =>
       payload.messages?.[0]?.content?.includes("human coworker"),
     );
-    assert.equal(ordinaryDialogueCalls.length >= 2, true);
+    assert.equal(ordinaryDialogueCalls.length >= 1, true);
     assert.equal(
       ordinaryDialogueCalls.every((payload) => payload.temperature === 0),
       true,
