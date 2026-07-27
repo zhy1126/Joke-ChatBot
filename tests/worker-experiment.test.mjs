@@ -45,7 +45,21 @@ test("participant-safe view never exposes condition, mapping, reactions, or mode
   assert.equal("config" in safe, false);
   assert.equal("modelHistory" in safe, false);
   assert.equal("phase" in safe, false);
+  assert.equal("assignmentMethod" in safe, false);
   assert.equal(JSON.stringify(safe).includes("not appropriate for work"), false);
+});
+
+test("shared coworker prompt respects explicit task closure without expansion", () => {
+  const session = startServerSession(
+    resolveBlindChoice(makeBlindSession(), "A", CLOCK),
+    "zh-CN",
+    CLOCK,
+  );
+  const prompt = buildCoworkerMessages(session)[0].content;
+  assert.match(prompt, /latest message has priority/i);
+  assert.match(prompt, /there is nothing else to handle/i);
+  assert.match(prompt, /Do not propose, imply, or ask about any additional check/i);
+  assert.match(prompt, /asking to check other months/i);
 });
 
 test("Chinese sessions use fixed Chinese wording", () => {
@@ -321,3 +335,4 @@ function makeBlindSession() {
     now: CLOCK,
   });
 }
+
