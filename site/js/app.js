@@ -12,6 +12,13 @@ import {
   startSession,
   submitParticipantMessage,
 } from "./core.js";
+import { initializeRemoteApp } from "./remote-app.js";
+import {
+  createRemoteApi,
+  readRemoteSettings,
+  remoteModeAvailable,
+  saveRemoteSettings,
+} from "./remote-api.js";
 
 const STORAGE_KEYS = Object.freeze({
   config: "workchat-lab::config",
@@ -27,11 +34,67 @@ const CONDITION_CLASSES = Object.freeze({
 const parameters = new URLSearchParams(window.location.search);
 const activeView = parameters.get("view") ?? "researcher";
 const activeSessionId = parameters.get("session");
+const remoteSettings = readRemoteSettings(parameters);
 
-if (activeView === "participant") {
+bindBackendConnection(remoteSettings);
+
+if (remoteModeAvailable(activeView, remoteSettings)) {
+  try {
+    await initializeRemoteApp({
+      view: activeView,
+      sessionToken: activeSessionId,
+      settings: remoteSettings,
+    });
+  } catch (error) {
+    console.error("remote_app_initialization_failed", error);
+    if (activeView === "participant") {
+      hideElement("researcher-view");
+      showElement("participant-view");
+      showElement("participant-error");
+      const message = byId("participant-error-message");
+      if (message) message.textContent = error.message;
+    } else {
+      initializeResearcher();
+      showToast(error.message);
+    }
+  }
+} else if (activeView === "participant") {
   initializeParticipant(activeSessionId);
 } else {
   initializeResearcher();
+}
+
+function bindBackendConnection(settings) {
+  const form = byId("backend-connection-form");
+  if (!form) return;
+  byId("backend-api-url").value = settings.apiBaseUrl;
+  byId("researcher-access-key").value = settings.researcherKey;
+  byId("backend-status").textContent = settings.apiBaseUrl
+    ? settings.researcherKey
+      ? "Connection saved for this tab"
+      : "API URL saved · enter researcher key"
+    : "Offline prototype mode";
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const next = saveRemoteSettings({
+      apiBaseUrl: byId("backend-api-url").value,
+      researcherKey: byId("researcher-access-key").value,
+    });
+    if (!next.apiBaseUrl) {
+      showToast("Enter a valid HTTPS Worker URL.");
+      return;
+    }
+    try {
+      const health = await createRemoteApi(next).health();
+      if (!health.ok) throw new Error("Backend health check failed.");
+      byId("backend-status").textContent = `${health.model} backend reached`;
+      window.setTimeout(() => window.location.reload(), 400);
+    } catch (error) {
+      byId("backend-status").textContent = "Backend unavailable";
+      showToast(error.message);
+    }
+  });
 }
 
 function initializeResearcher() {
@@ -176,15 +239,23 @@ function readConfigurationForm() {
     coworkerName: byId("coworker-name").value,
     participantLabel: byId("participant-label").value,
     scenarioText: byId("scenario-text").value,
+    scenarioTextZh: byId("scenario-text-zh").value,
     openingMessage: byId("opening-message").value,
+    openingMessageZh: byId("opening-message-zh").value,
     triggerMode: byId("trigger-mode").value,
     preJokeTurns: byId("pre-joke-turns").value,
     jokeCue: byId("joke-cue").value,
+    jokeCueZh: byId("joke-cue-zh").value,
     targetJoke: byId("target-joke").value,
+    targetJokeZh: byId("target-joke-zh").value,
     negativeReaction: byId("negative-reaction").value,
+    negativeReactionZh: byId("negative-reaction-zh").value,
     neutralReaction: byId("neutral-reaction").value,
+    neutralReactionZh: byId("neutral-reaction-zh").value,
     positiveReaction: byId("positive-reaction").value,
+    positiveReactionZh: byId("positive-reaction-zh").value,
     canonicalReaction: byId("canonical-reaction").value,
+    canonicalReactionZh: byId("canonical-reaction-zh").value,
     reactionDelayMs: byId("reaction-delay").value,
     postJokeTurns: byId("post-joke-turns").value,
   };
@@ -194,15 +265,23 @@ function renderConfiguration(config) {
   byId("coworker-name").value = config.coworkerName;
   byId("participant-label").value = config.participantLabel;
   byId("scenario-text").value = config.scenarioText;
+  byId("scenario-text-zh").value = config.scenarioTextZh;
   byId("opening-message").value = config.openingMessage;
+  byId("opening-message-zh").value = config.openingMessageZh;
   byId("trigger-mode").value = config.triggerMode;
   byId("pre-joke-turns").value = config.preJokeTurns;
   byId("joke-cue").value = config.jokeCue;
+  byId("joke-cue-zh").value = config.jokeCueZh;
   byId("target-joke").value = config.targetJoke;
+  byId("target-joke-zh").value = config.targetJokeZh;
   byId("negative-reaction").value = config.negativeReaction;
+  byId("negative-reaction-zh").value = config.negativeReactionZh;
   byId("neutral-reaction").value = config.neutralReaction;
+  byId("neutral-reaction-zh").value = config.neutralReactionZh;
   byId("positive-reaction").value = config.positiveReaction;
+  byId("positive-reaction-zh").value = config.positiveReactionZh;
   byId("canonical-reaction").value = config.canonicalReaction;
+  byId("canonical-reaction-zh").value = config.canonicalReactionZh;
   byId("reaction-delay").value = config.reactionDelayMs;
   byId("post-joke-turns").value = config.postJokeTurns;
   byId("save-indicator").textContent = "Saved locally";
@@ -211,6 +290,10 @@ function renderConfiguration(config) {
 
 function createResearchSession() {
   const assignment = byId("condition-assignment").value;
+  if (assignment === "participant_blind") {
+    showToast("Participant blind choice requires the secure server backend.");
+    return;
+  }
   const participantCode = byId("participant-code").value.trim();
   const session = createAndStoreSession(assignment, participantCode);
   byId("participant-code").value = "";
@@ -318,6 +401,10 @@ function initializeParticipant(sessionId) {
   }
 
   const config = normalizeConfig(session.configSnapshot);
+  byId("participant-language").value = "en";
+  byId("participant-language").disabled = true;
+  byId("participant-language").title =
+    "Bilingual dialogue is available in secure DeepSeek backend mode.";
   document.title = `${config.coworkerName} · Workplace chat`;
   document.querySelectorAll(".coworker-name-text").forEach((element) => {
     element.textContent = config.coworkerName;
