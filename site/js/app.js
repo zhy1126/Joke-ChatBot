@@ -19,6 +19,7 @@ import {
   remoteModeAvailable,
   saveRemoteSettings,
 } from "./remote-api.js";
+import { initializeEvaluator } from "./evaluator.js";
 
 const STORAGE_KEYS = Object.freeze({
   config: "workchat-lab::config",
@@ -36,9 +37,16 @@ const activeView = parameters.get("view") ?? "researcher";
 const activeSessionId = parameters.get("session");
 const remoteSettings = readRemoteSettings();
 
-bindBackendConnection(remoteSettings);
+if (activeView === "evaluator") {
+  initializeEvaluator();
+} else {
+  bindBackendConnection(remoteSettings);
+}
 
-if (remoteModeAvailable(activeView, remoteSettings)) {
+if (activeView === "evaluator") {
+  // The permanent evaluator is deliberately browser-local and never requests
+  // researcher credentials or writes to the formal experiment database.
+} else if (remoteModeAvailable(activeView, remoteSettings)) {
   try {
     await initializeRemoteApp({
       view: activeView,
