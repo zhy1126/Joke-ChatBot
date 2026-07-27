@@ -367,6 +367,7 @@ test("visible condition reactions collapse to the same canonical model history",
 test("explicit task closure locks one grounded bridge across reaction conditions", async () => {
   const bridges = [];
   const replies = [];
+  const closureReplies = [];
   for (const card of ["A", "B", "C"]) {
     let session = startServerSession(
       resolveBlindChoice(makeBlindSession(), card, CLOCK),
@@ -408,6 +409,22 @@ test("explicit task closure locks one grounded bridge across reaction conditions
     );
     replies.push(result.reply);
     bridges.push(result.session.modelHistory.at(-1).text);
+    let dialogueCalls = 0;
+    const closed = await processParticipantMessage(
+      result.session,
+      "好，标题已经处理好，也没有其他事项了。",
+      {
+        now: CLOCK,
+        generateReply: async () => {
+          dialogueCalls += 1;
+          return "不应调用";
+        },
+      },
+    );
+    assert.equal(dialogueCalls, 0);
+    assert.equal(closed.session.jokeSeen, true);
+    assert.equal(closed.session.messages.at(-1).kind, "shared_explicit_closure");
+    closureReplies.push(closed.reply);
   }
   assert.equal(new Set(replies).size, 3);
   assert.equal(new Set(bridges).size, 1);
@@ -416,6 +433,8 @@ test("explicit task closure locks one grounded bridge across reaction conditions
     replies.every((reply) => reply.endsWith("那我们先这样，稍后再聊。")),
     true,
   );
+  assert.equal(new Set(closureReplies).size, 1);
+  assert.equal(closureReplies[0], "好的，明白了。那就先这样。");
 });
 
 function makeBlindSession() {
