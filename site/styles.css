@@ -337,6 +337,42 @@ button {
   line-height: 1.55;
 }
 
+.prototype-notice.live-notice {
+  border-color: rgba(7, 193, 96, 0.28);
+  background: #f0fff7;
+}
+
+.backend-connection-panel {
+  margin-bottom: 24px;
+  padding: 22px 24px;
+}
+
+.backend-connection-form {
+  display: grid;
+  grid-template-columns: minmax(240px, 1.4fr) minmax(220px, 1fr) auto;
+  align-items: end;
+  gap: 14px;
+}
+
+.backend-connection-form .button {
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+.backend-status {
+  padding: 7px 11px;
+  border-radius: 999px;
+  color: #8a641c;
+  background: #fff5d9;
+  font-size: 0.65rem;
+  font-weight: 800;
+}
+
+.backend-status.connected {
+  color: #08763c;
+  background: #e5f9ee;
+}
+
 .dashboard-section {
   margin-bottom: 26px;
 }
@@ -857,6 +893,65 @@ td {
 .error-card p {
   color: var(--muted);
   line-height: 1.7;
+}
+
+.language-choice {
+  margin: 22px 0 18px;
+  text-align: left;
+}
+
+.language-choice select {
+  margin-top: 7px;
+}
+
+.blind-choice-panel {
+  margin: 22px 0 18px;
+  padding: 20px;
+  border: 1px solid #dfe8e2;
+  border-radius: 15px;
+  text-align: left;
+  background: #f8fbf9;
+}
+
+.blind-choice-panel h2 {
+  margin: 6px 0 5px;
+  color: #25342c;
+  font-size: 1rem;
+}
+
+.blind-choice-panel p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.6;
+}
+
+.blind-card-grid {
+  margin-top: 17px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.blind-card-grid button {
+  min-height: 74px;
+  border: 1px solid #cfdbd3;
+  border-radius: 11px;
+  color: #34483d;
+  background: #fff;
+  font-size: 1rem;
+  font-weight: 850;
+  box-shadow: 0 6px 16px rgba(32, 65, 47, 0.06);
+}
+
+.blind-card-grid button:hover {
+  border-color: var(--wechat-green);
+  box-shadow: 0 8px 20px rgba(7, 193, 96, 0.12);
+}
+
+.blind-card-grid button:disabled {
+  cursor: wait;
+  opacity: 0.55;
 }
 
 .intro-details {
@@ -1555,6 +1650,14 @@ td {
   .chat-shell {
     grid-template-columns: 58px 215px 1fr;
   }
+
+  .backend-connection-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .backend-connection-form .button {
+    width: fit-content;
+  }
 }
 
 @media (max-width: 800px) {
@@ -1667,8 +1770,13 @@ td {
   .metric-grid,
   .form-row.two-columns,
   .choice-grid,
-  .intro-details {
+  .intro-details,
+  .backend-connection-form {
     grid-template-columns: 1fr;
+  }
+
+  .backend-connection-form .button {
+    width: 100%;
   }
 
   .metric-card {
