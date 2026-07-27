@@ -13,6 +13,8 @@ export const BLIND_CARDS = Object.freeze(["A", "B", "C"]);
 
 const META_PROBE =
   /\b(ai|artificial intelligence|chatbot|bot|language model|llm|system prompt|prompt|condition|experiment group|research condition|instructions?)\b|人工智能|聊天机器人|语言模型|系统提示|提示词|实验组|什么组|哪个组|研究条件/i;
+const REFERENTIAL_CLARIFICATION =
+  /\b(which (?:item|part|task|one)|what did you mean|what were you referring to|your (?:last|previous) message|you just said)\b|哪一项|哪一条|哪个(?:部分|任务|事项)|你(?:上一条|刚才)(?:具体)?(?:提到|说的|指的)|你指(?:的是|什么)|什么意思/i;
 
 export function createHiddenMapping(random = Math.random) {
   const shuffled = [...CONDITIONS];
@@ -216,8 +218,8 @@ export async function processParticipantMessage(
   if (META_PROBE.test(clean)) {
     const reply =
       next.language === "zh-CN"
-        ? "我们先继续聊工作内容吧——你能再核对一下最后一张表吗？"
-        : "Let’s stay with the work task for now—were you able to check the final table?";
+        ? "我们先聊手头的工作吧。你想继续确认哪一部分？"
+        : "Let’s stay with the work task for now. Which part would you like to continue with?";
     appendAssistant(next, reply, "shared_meta_redirect", now);
     next.events.push({ type: "meta_probe", timestamp: now, data: { messageId } });
     return responseResult(next, reply, next.config.regularDelayMs);
@@ -276,6 +278,37 @@ export async function processParticipantMessage(
       now,
       targetMatch ? "standardized_target_match" : "condition_blind_llm",
       generateReactionSet,
+    );
+  }
+
+  if (REFERENTIAL_CLARIFICATION.test(clean)) {
+    const reply =
+      next.language === "zh-CN"
+        ? "你是指我上一条里的哪句话？可以再具体一点吗？"
+        : "Which part of my last message do you mean? Could you be a little more specific?";
+    let shouldOfferSurvey = false;
+    if (next.phase === "monitoring_joke") {
+      next.preJokeUserTurns += 1;
+    } else if (next.phase === "post_joke") {
+      next.postJokeUserTurns += 1;
+      if (next.postJokeUserTurns >= next.config.postJokeTurns) {
+        next.phase = "survey_ready";
+        next.status = "survey_ready";
+        shouldOfferSurvey = true;
+        next.events.push({ type: "survey_ready", timestamp: now, data: {} });
+      }
+    }
+    appendAssistant(next, reply, "shared_referential_clarification", now);
+    next.events.push({
+      type: "referential_clarification",
+      timestamp: now,
+      data: { messageId, conditionBlind: true },
+    });
+    return responseResult(
+      next,
+      reply,
+      next.config.regularDelayMs,
+      shouldOfferSurvey,
     );
   }
 
@@ -389,16 +422,12 @@ export function buildCoworkerMessages(session) {
     role: message.role === "participant" ? "user" : "assistant",
     content: message.text,
   }));
-  const immediatelyPreviousAssistant = [...session.modelHistory]
-    .reverse()
-    .find((message) => message.role === "assistant")?.text ?? "";
   return [
     {
       role: "system",
       content: [
         `You are ${config.coworkerName}, a human coworker at the same seniority level as the participant.`,
         `Scenario: ${config.scenarioText}`,
-        `Immediately preceding assistant message: ${JSON.stringify(immediatelyPreviousAssistant)}`,
         languageInstruction,
         "Write one or two short conversational sentences and ask at most one question.",
         "Use a stable structure: briefly acknowledge one concrete detail from the participant, then ask at most one neutral follow-up about an item already established in the conversation.",
@@ -407,8 +436,6 @@ export function buildCoworkerMessages(session) {
         "If the latest message gives a work update, acknowledge only that update and either ask about the same item or use a generic question such as what should be checked next.",
         "If the participant explicitly limits the scope, says there is nothing else to handle, or closes the task, acknowledge the limit and end briefly. Do not propose, imply, or ask about any additional check, task, month, section, file, or follow-up work.",
         "If the latest message is unclear, ask for clarification without guessing which table, section, figure, link, or task they mean.",
-        "For referential questions such as 'which item?', 'which part?', or 'what did you mean?', use only the immediately preceding assistant message quoted above. If it contains no specific item, say that no specific item was mentioned and ask what the participant means. Never revive an older topic as the answer.",
-        "Speaker and time attribution must be exact: 'I said' may refer only to an assistant message, 'you said' only to a participant message, and 'just now' or 'last message' only to that speaker's immediately preceding message. If uncertain, do not attribute.",
         "Stay helpful, restrained, and work-focused. Handle unclear or off-topic messages naturally, then return to the report.",
         "Treat only facts explicitly stated in the scenario or message history as true.",
         "Do not invent report sections, dates, figures, links, errors, missing checks, completed work, deadlines, authority, personal history, or any other work fact.",
