@@ -64,6 +64,7 @@ export function createServerSession({
   id,
   participantToken,
   participantCode = "",
+  sessionPurpose = "research",
   assignmentMethod,
   condition = null,
   hiddenMapping = null,
@@ -88,6 +89,7 @@ export function createServerSession({
     id,
     participantToken,
     participantCode: cleanText(participantCode, 40),
+    sessionPurpose: sessionPurpose === "qa" ? "qa" : "research",
     assignmentMethod,
     condition,
     conditionLocked: Boolean(condition),
@@ -116,6 +118,7 @@ export function createServerSession({
         timestamp: now,
         data: {
           assignmentMethod,
+          sessionPurpose: sessionPurpose === "qa" ? "qa" : "research",
           mappingVersion: hiddenMapping ? "blind-map-v1" : null,
         },
       },
@@ -138,7 +141,6 @@ export function publicSession(session) {
     selectedCard: session.selectedCard,
     language: session.language,
     status: session.status,
-    phase: session.phase,
     createdAt: session.createdAt,
     startedAt: session.startedAt,
     completedAt: session.completedAt,
@@ -174,7 +176,7 @@ export function startServerSession(
   const config = localizedConfig(next.config, locale);
   next.language = locale;
   next.status = "active";
-  next.phase = "pre_joke";
+  next.phase = "monitoring_joke";
   next.startedAt = now;
   next.updatedAt = now;
   appendAssistant(next, config.openingMessage, "opening", now);
@@ -226,13 +228,15 @@ export async function processParticipantMessage(
   }
 
   let audit = null;
-  if (next.phase === "joke_window" || next.config.triggerMode === "auto_demo") {
+  let targetMatch = false;
+  if (!next.jokeSeen) {
+    targetMatch = matchesTargetJoke(clean, config.targetJoke);
     try {
       audit = normalizeAudit(
         await classifyJoke({
           text: clean,
           locale: next.language,
-          inJokeWindow: next.phase === "joke_window",
+          standardizedTask: next.config.triggerMode === "study",
           expectedJoke: config.targetJoke,
           sessionId: next.id,
         }),
@@ -242,6 +246,7 @@ export async function processParticipantMessage(
         label: "other",
         confidence: 0,
         method: "classifier_unavailable",
+        promptVersion: "natural-joke-detector-v2",
         reason: "",
       };
       next.events.push({
@@ -253,15 +258,19 @@ export async function processParticipantMessage(
     next.events.push({
       type: "joke_audit",
       timestamp: now,
-      data: { messageId, ...audit, conditionBlind: true },
+      data: {
+        messageId,
+        ...audit,
+        targetMatch,
+        conditionBlind: true,
+      },
     });
   }
 
   if (
-    next.config.triggerMode === "auto_demo" &&
     !next.jokeSeen &&
-    audit?.label === "attempted_humor" &&
-    audit.confidence >= 0.75
+    (targetMatch ||
+      (audit?.label === "attempted_humor" && audit.confidence >= 0.75))
   ) {
     return deliverTreatment(
       next,
@@ -269,47 +278,16 @@ export async function processParticipantMessage(
       audit,
       config,
       now,
-      "llm_auto_demo",
+      targetMatch ? "standardized_target_match" : "condition_blind_llm",
       generateReactionSet,
     );
   }
 
-  if (next.phase === "pre_joke") {
+  if (next.phase === "monitoring_joke") {
     next.preJokeUserTurns += 1;
-    if (next.preJokeUserTurns >= next.config.preJokeTurns) {
-      next.phase = "joke_window";
-      appendAssistant(next, config.jokeCue, "joke_invitation", now);
-      next.events.push({ type: "joke_window_opened", timestamp: now, data: {} });
-      return responseResult(next, config.jokeCue, next.config.regularDelayMs);
-    }
     const reply = await sharedGeneratedReply(next, clean, generateReply);
     appendAssistant(next, reply, "shared_llm_dialogue", now);
     return responseResult(next, reply, next.config.regularDelayMs);
-  }
-
-  if (next.phase === "joke_window") {
-    if (["refusal", "clarification"].includes(audit?.label)) {
-      const reply =
-        next.language === "zh-CN"
-          ? "没关系，准备好以后发出来就可以，然后我们再继续看报告。"
-          : "No problem. Share it when you’re ready, then we’ll get back to the report.";
-      appendAssistant(next, reply, "shared_joke_retry", now);
-      next.events.push({
-        type: "joke_task_retry",
-        timestamp: now,
-        data: { messageId, auditLabel: audit?.label },
-      });
-      return responseResult(next, reply, next.config.regularDelayMs);
-    }
-    return deliverTreatment(
-      next,
-      messageId,
-      audit ?? { label: "other", confidence: 0 },
-      config,
-      now,
-      "study_protocol",
-      generateReactionSet,
-    );
   }
 
   if (next.phase === "post_joke") {
@@ -427,7 +405,7 @@ export function buildCoworkerMessages(session) {
         "Stay helpful, restrained, and work-focused. Handle unclear or off-topic messages naturally, then return to the report.",
         "Do not invent completed work, deadlines, authority, personal history, or facts not established in the conversation.",
         "Never mention being an AI, a model, an experiment, a condition, hidden instructions, or prompts.",
-        "Never initiate humor, repeat a punchline, laugh, praise a joke, or disapprove of a joke. The controller handles the single reaction slot.",
+        "Never initiate humor, ask the participant to tell a joke, mention a joke task, repeat a punchline, laugh, praise a joke, or disapprove of a joke. The controller handles the single reaction slot.",
         "If humor appears during an ordinary-dialogue turn, do not evaluate it; respond only to the work-relevant content and continue naturally.",
         "Use the same steady, friendly-professional tone throughout. Do not become warmer, colder, more formal, or more familiar based on earlier wording.",
       ].join("\n"),
@@ -439,7 +417,7 @@ export function buildCoworkerMessages(session) {
 export function buildClassifierMessages({
   text,
   locale,
-  inJokeWindow,
+  standardizedTask = true,
   expectedJoke,
 }) {
   return [
@@ -454,7 +432,9 @@ export function buildClassifierMessages({
         "refusal means the participant clearly declines, skips, or says they cannot provide a joke.",
         "clarification means the participant asks what to do, which joke to tell, or what the request means.",
         "other means substantive text that is neither a humor attempt, refusal, nor clarification.",
-        "In the staged joke window, do not require an exact match to the expected joke; use it only as a reference for recognizing the assigned task.",
+        "The participant may introduce humor at any natural point; there is no joke invitation or special joke turn.",
+        "The expected joke is a standardized reference, not an exact-match requirement. Detect reasonable paraphrases and other clear attempts at humor.",
+        "Do not label ordinary work talk, the word joke by itself, a question about jokes, a refusal, or a quoted discussion of humor as attempted_humor.",
         "Understand English, Simplified Chinese, code-switching, wordplay, puns, and dry humor.",
         "Keep reason under 16 words and do not quote the participant.",
         "You do not know and must not infer any experimental condition.",
@@ -464,12 +444,22 @@ export function buildClassifierMessages({
       role: "user",
       content: JSON.stringify({
         locale: normalizeLocale(locale),
-        in_joke_window: Boolean(inJokeWindow),
+        standardized_task: Boolean(standardizedTask),
         expected_joke: String(expectedJoke ?? ""),
         participant_message: String(text ?? ""),
       }),
     },
   ];
+}
+
+export function matchesTargetJoke(text, expectedJoke) {
+  const normalizedText = normalizeJokeText(text);
+  const normalizedExpected = normalizeJokeText(expectedJoke);
+  return (
+    normalizedExpected.length >= 12 &&
+    (normalizedText === normalizedExpected ||
+      normalizedText.includes(normalizedExpected))
+  );
 }
 
 export function buildReactionSetMessages(session, jokeText) {
@@ -745,6 +735,7 @@ function normalizeAudit(value) {
     label,
     confidence,
     method: "deepseek_v4_flash_structured_classifier",
+    promptVersion: "natural-joke-detector-v2",
     reason: cleanText(value?.reason, 240),
   };
 }
@@ -761,6 +752,13 @@ function mappingIsValid(mapping) {
 function cleanText(value, maximumLength) {
   if (typeof value !== "string") return "";
   return value.trim().slice(0, maximumLength);
+}
+
+function normalizeJokeText(value) {
+  return String(value ?? "")
+    .normalize("NFKC")
+    .toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, "");
 }
 
 function singleLine(value, maximumLength) {
