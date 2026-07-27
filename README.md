@@ -34,10 +34,22 @@ The repository contains all source code, prompts, non-secret configuration,
 database migration, tests, run instructions, matched transcripts, and AI-use
 disclosure. It contains no active API key or password.
 
-The public evaluator runs a three-panel, browser-local QA comparison. Every
-entered message is sent to condition-locked Negative, Neutral, and
-Polite-positive conversations. It does not call researcher endpoints, reveal
-provider credentials, or write to the formal D1 dataset.
+The public evaluator now has two complementary modes:
+
+- **Live DeepSeek API test:** the evaluator selects Negative, Neutral, or
+  Polite-positive, chooses English or Simplified Chinese, and creates a fresh
+  condition-locked QA session without a password. Messages use the same
+  DeepSeek dialogue, joke-classification, and contextual reaction pipeline as
+  the formal participant flow.
+- **Local matched-control comparison:** one message is sent to all three
+  deterministic fallback conversations for a quick side-by-side control check.
+
+Live evaluator sessions are written as `qa`, excluded from formal metrics, and
+cannot access researcher endpoints, custom prompts, provider credentials, or
+admin data. Server-side rolling limits allow three evaluator sessions per
+network client and 30 evaluator sessions deployment-wide per 24 hours, with at
+most eight participant messages per evaluator session. The limits are
+configurable in `worker/wrangler.toml`.
 
 ## How the experiment works
 
@@ -183,7 +195,7 @@ npm test
 npm run check
 ```
 
-The current suite contains 43 tests covering:
+The current suite contains 45 tests covering:
 
 - all assignment modes and blind-card locking;
 - participant-safe API responses;
@@ -232,7 +244,7 @@ worker/
   src/index.js               Worker routes, D1 persistence, DeepSeek client
   migrations/                D1 schema
   wrangler.toml              Non-secret Worker configuration
-tests/                       43 automated control and regression tests
+tests/                       45 automated control and regression tests
 docs/
   PROMPTS.md                 Submitted prompts and model parameters
   SUBMISSION.md              <500-word explanation and matched transcripts
