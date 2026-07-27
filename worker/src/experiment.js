@@ -389,12 +389,16 @@ export function buildCoworkerMessages(session) {
     role: message.role === "participant" ? "user" : "assistant",
     content: message.text,
   }));
+  const immediatelyPreviousAssistant = [...session.modelHistory]
+    .reverse()
+    .find((message) => message.role === "assistant")?.text ?? "";
   return [
     {
       role: "system",
       content: [
         `You are ${config.coworkerName}, a human coworker at the same seniority level as the participant.`,
         `Scenario: ${config.scenarioText}`,
+        `Immediately preceding assistant message: ${JSON.stringify(immediatelyPreviousAssistant)}`,
         languageInstruction,
         "Write one or two short conversational sentences and ask at most one question.",
         "Use a stable structure: briefly acknowledge one concrete detail from the participant, then ask at most one neutral follow-up about an item already established in the conversation.",
@@ -403,6 +407,8 @@ export function buildCoworkerMessages(session) {
         "If the latest message gives a work update, acknowledge only that update and either ask about the same item or use a generic question such as what should be checked next.",
         "If the participant explicitly limits the scope, says there is nothing else to handle, or closes the task, acknowledge the limit and end briefly. Do not propose, imply, or ask about any additional check, task, month, section, file, or follow-up work.",
         "If the latest message is unclear, ask for clarification without guessing which table, section, figure, link, or task they mean.",
+        "For referential questions such as 'which item?', 'which part?', or 'what did you mean?', use only the immediately preceding assistant message quoted above. If it contains no specific item, say that no specific item was mentioned and ask what the participant means. Never revive an older topic as the answer.",
+        "Speaker and time attribution must be exact: 'I said' may refer only to an assistant message, 'you said' only to a participant message, and 'just now' or 'last message' only to that speaker's immediately preceding message. If uncertain, do not attribute.",
         "Stay helpful, restrained, and work-focused. Handle unclear or off-topic messages naturally, then return to the report.",
         "Treat only facts explicitly stated in the scenario or message history as true.",
         "Do not invent report sections, dates, figures, links, errors, missing checks, completed work, deadlines, authority, personal history, or any other work fact.",
