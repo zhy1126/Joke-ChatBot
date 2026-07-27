@@ -23,10 +23,12 @@ npx wrangler login
 
 ## 1. Provision D1
 
-The D1 binding in `worker/wrangler.toml` intentionally contains only
-`binding = "DB"`. Wrangler 4.45 or newer automatically provisions and binds the
-database on the first deployment. After deployment, the migration command uses
-the binding name `DB`, so no account-specific database ID needs to be committed.
+The D1 binding in `worker/wrangler.toml` intentionally contains no account ID.
+Before every deployment, `worker/prepare-deploy-config.mjs` lists the account's
+D1 databases, reuses `jokechatbot-db` when it exists, or creates it when absent.
+It writes the resolved UUID to the ignored
+`worker/wrangler.deploy.toml`. The generated file is used for both deployment
+and migrations, so no account-specific database ID is committed.
 
 ## 2. Add encrypted Worker secrets
 
@@ -55,8 +57,8 @@ npm run worker:deploy
 
 For Cloudflare Workers Builds connected to this GitHub repository, leave the
 optional build command blank and use `npm run worker:deploy` as the deploy
-command. The script deploys first so D1 can be provisioned, then applies the
-tracked schema migration.
+command. The script resolves the existing D1 database, deploys the Worker, then
+applies the tracked schema migration.
 
 Copy the resulting HTTPS Worker URL and verify:
 
