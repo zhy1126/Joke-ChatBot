@@ -22,9 +22,9 @@ test("researcher form hides the separate Chinese opening-message field", () => {
 });
 
 test("researcher interface contains no visible Chinese copy", () => {
-  const researcherHtml = html.split(
-    '<div id="participant-view" class="participant-app hidden">',
-  )[0];
+  const researcherHtml = html.match(
+    /<div id="researcher-view" class="researcher-app">[\s\S]*?(?=<div id="evaluator-view")/,
+  )?.[0] || "";
   assert.doesNotMatch(researcherHtml, /[\u3400-\u9fff]/u);
   assert.doesNotMatch(
     researcherHtml,
@@ -65,14 +65,19 @@ test("formal sessions and participant preview default to blind card choice", () 
   );
 });
 
-test("public evaluator is permanent, passwordless, and browser-local", () => {
+test("public evaluator combines password-free live API and local comparison modes", () => {
   assert.match(html, /href="\.\/\?view=evaluator"/);
   assert.match(html, /id="evaluator-view"/);
   assert.match(html, /No password or account is required\./);
-  assert.match(html, /excluded from research data/);
+  assert.match(html, /Live DeepSeek API test/);
+  assert.match(html, /id="live-evaluator-condition"/);
+  assert.match(html, /id="live-evaluator-language"/);
   assert.match(app, /activeView === "evaluator"/);
   assert.match(app, /initializeEvaluator\(\)/);
-  assert.doesNotMatch(evaluator, /createRemoteApi|researcherKey|fetch\(/);
+  assert.match(evaluator, /createRemoteApi/);
+  assert.match(evaluator, /createEvaluatorSession\(condition, language\)/);
+  assert.match(evaluator, /sendMessage\(liveToken, text\)/);
+  assert.doesNotMatch(evaluator, /researcherKey|Authorization/);
   assert.match(evaluator, /for \(const condition of CONDITIONS\)/);
   assert.match(evaluator, /submitParticipantMessage\(current, text\)/);
 });
