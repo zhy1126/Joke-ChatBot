@@ -206,33 +206,25 @@
               </fieldset>
 
               <fieldset>
-                <legend>Target joke stage</legend>
-                <div class="form-row two-columns">
-                  <label>
-                    Trigger mode
-                    <select id="trigger-mode" name="triggerMode">
-                      <option value="study">Study · staged trigger</option>
-                      <option value="auto_demo">Exploratory · automatic demo</option>
-                    </select>
-                  </label>
-                  <label>
-                    Pre-joke participant turns
-                    <input
-                      id="pre-joke-turns"
-                      name="preJokeTurns"
-                      type="number"
-                      min="1"
-                      max="6"
-                    />
-                  </label>
-                </div>
+                <legend>Condition-blind joke detection</legend>
+                <p class="fieldset-note">
+                  The coworker never asks for a joke. Before the chat,
+                  participants are instructed to introduce the prepared joke at
+                  a natural moment. Every untreated message is checked by the
+                  same condition-blind multilingual detector.
+                </p>
                 <label>
-                  Standard joke invitation
-                  <textarea id="joke-cue" name="jokeCue" rows="2"></textarea>
+                  Detection protocol
+                  <select id="trigger-mode" name="triggerMode">
+                    <option value="study">Standardized task · recommended</option>
+                    <option value="auto_demo">Open humor · exploratory</option>
+                  </select>
                 </label>
+                <input id="pre-joke-turns" name="preJokeTurns" type="hidden" />
+                <input id="joke-cue" name="jokeCue" type="hidden" />
                 <input id="joke-cue-zh" name="jokeCueZh" type="hidden" />
                 <label>
-                  Participant task joke
+                  Standardized participant joke
                   <textarea id="target-joke" name="targetJoke" rows="2"></textarea>
                 </label>
                 <input id="target-joke-zh" name="targetJokeZh" type="hidden" />
@@ -342,6 +334,7 @@
                   <option value="negative">Negative</option>
                   <option value="neutral">Neutral</option>
                   <option value="polite_positive">Polite-positive</option>
+                  <option value="qa_triplet">QA test pack · all three conditions</option>
                 </select>
               </label>
               <label>
@@ -358,7 +351,8 @@
               <p class="helper-text">
                 The condition is locked on the server before the conversation begins,
                 either at assignment or after a blind A/B/C card choice. Its meaning is
-                never shown in the participant interface.
+                never shown in the participant interface. QA test packs create three
+                independent, flagged sessions and are excluded from formal metrics.
               </p>
             </section>
 
@@ -498,10 +492,11 @@
               <span><b>Privacy</b> Use no identifying information</span>
             </div>
             <div class="task-card">
-              <span class="task-label">Your task</span>
-              <p>
-                Respond naturally. When your coworker asks for a joke, send the joke
-                below:
+              <span id="participant-task-label" class="task-label">Your task</span>
+              <p id="participant-task-copy">
+                Respond naturally. After at least one work-related exchange,
+                introduce the prepared joke below when it feels natural. Do not
+                wait for your coworker to ask for it.
               </p>
               <blockquote id="participant-target-joke"></blockquote>
             </div>
