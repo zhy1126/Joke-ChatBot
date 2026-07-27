@@ -62,6 +62,29 @@ test("shared coworker prompt respects explicit task closure without expansion", 
   assert.match(prompt, /asking to check other months/i);
 });
 
+test("shared coworker prompt anchors referential clarification to the last assistant turn", () => {
+  const session = startServerSession(
+    resolveBlindChoice(makeBlindSession(), "A", CLOCK),
+    "zh-CN",
+    CLOCK,
+  );
+  session.modelHistory.push({
+    id: "m_last",
+    role: "assistant",
+    text: "好的，那就先这样。下午开会时见。",
+    kind: "shared_llm_dialogue",
+    timestamp: CLOCK,
+  });
+  const prompt = buildCoworkerMessages(session)[0].content;
+  assert.match(
+    prompt,
+    /Immediately preceding assistant message: "好的，那就先这样。下午开会时见。"/,
+  );
+  assert.match(prompt, /use only the immediately preceding assistant message/i);
+  assert.match(prompt, /Never revive an older topic/i);
+  assert.match(prompt, /Speaker and time attribution must be exact/i);
+});
+
 test("Chinese sessions use fixed Chinese wording", () => {
   const session = startServerSession(
     resolveBlindChoice(makeBlindSession(), "C", CLOCK),
