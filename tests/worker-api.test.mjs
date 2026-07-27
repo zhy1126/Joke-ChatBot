@@ -14,6 +14,9 @@ test("Worker provides a secure Chinese blind-choice conversation flow", async ()
     const payload = JSON.parse(options.body);
     deepSeekPayloads.push(payload);
     const systemPrompt = payload.messages?.[0]?.content || "";
+    const classifierInput = payload.response_format
+      ? JSON.parse(payload.messages?.[1]?.content || "{}")
+      : {};
     const content = systemPrompt.includes("matched set")
       ? JSON.stringify({
           negative_prefix: "这个笑话不太适合工作场合。",
@@ -23,9 +26,15 @@ test("Worker provides a secure Chinese blind-choice conversation flow", async ()
         })
       : payload.response_format
         ? JSON.stringify({
-          label: "attempted_humor",
+          label:
+            classifierInput.participant_message === DEFAULT_CONFIG.targetJokeZh
+              ? "attempted_humor"
+              : "other",
           confidence: 0.98,
-          reason: "participant supplied a punchline",
+          reason:
+            classifierInput.participant_message === DEFAULT_CONFIG.targetJokeZh
+              ? "participant supplied a punchline"
+              : "ordinary work message",
         })
         : "好的，我会再核对一下表格标题。";
     return new Response(
@@ -90,11 +99,19 @@ test("Worker provides a secure Chinese blind-choice conversation flow", async ()
     });
     assert.equal(first.body.reply, "好的，我会再核对一下表格标题。");
 
-    const cue = await callWorker(env, `/api/sessions/${token}/messages`, {
+    const second = await callWorker(env, `/api/sessions/${token}/messages`, {
       method: "POST",
       body: { text: "附录也已经完成。" },
     });
-    assert.match(cue.body.reply, /笑话/);
+    assert.equal(second.body.reply, "好的，我会再核对一下表格标题。");
+    assert.equal(second.body.session.status, "active");
+    assert.equal("phase" in second.body.session, false);
+    assert.equal(
+      second.body.session.messages.some(
+        (message) => message.kind === "joke_invitation",
+      ),
+      false,
+    );
 
     const treatment = await callWorker(
       env,
@@ -104,7 +121,7 @@ test("Worker provides a secure Chinese blind-choice conversation flow", async ()
         body: { text: DEFAULT_CONFIG.targetJokeZh },
       },
     );
-    assert.equal(treatment.body.session.phase, "post_joke");
+    assert.equal(treatment.body.session.status, "treatment_delivered");
     assert.equal(
       [
         "这个笑话不太适合工作场合。我们接着核对附录里的数字吧。",
@@ -142,6 +159,30 @@ test("Worker rejects an unapproved browser origin", async () => {
     ALLOWED_ORIGINS: ORIGIN,
   });
   assert.equal(response.status, 403);
+});
+
+test("Worker flags QA sessions for researchers but not participants", async () => {
+  const database = new MockD1();
+  const env = {
+    DB: database,
+    RESEARCHER_KEY: "researcher-test-key",
+    ALLOWED_ORIGINS: ORIGIN,
+  };
+  const created = await callWorker(env, "/api/admin/sessions", {
+    method: "POST",
+    admin: true,
+    body: {
+      assignmentMethod: "researcher_manual",
+      condition: "negative",
+      sessionPurpose: "qa",
+      participantCode: "QA-negative",
+      config: DEFAULT_CONFIG,
+    },
+  });
+  assert.equal(created.body.session.sessionPurpose, "qa");
+  const token = created.body.session.participantToken;
+  const participant = await callWorker(env, `/api/sessions/${token}`);
+  assert.equal("sessionPurpose" in participant.body.session, false);
 });
 
 async function callWorker(
