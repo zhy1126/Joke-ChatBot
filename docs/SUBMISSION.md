@@ -7,10 +7,17 @@
   https://zhy1126.github.io/Joke-ChatBot/?view=evaluator
 - Source repository: https://github.com/zhy1126/Joke-ChatBot
 
-The evaluator sends each entered participant message to three matched,
-condition-locked browser-local conversations. It is deliberately excluded from
-formal study data and requires no researcher password. The secure live
-participant flow remains backed by DeepSeek through the Cloudflare Worker.
+The evaluator requires no password and provides two test modes. In Live
+DeepSeek API mode, the evaluator selects one of the three conditions and
+creates a fresh condition-locked QA session using the same server-side
+dialogue, joke classifier, and contextual reaction generator as the formal
+participant flow. A secondary browser-local panel sends matched input to all
+three deterministic fallbacks for immediate side-by-side comparison. Live QA
+sessions are flagged and excluded from formal metrics; the page cannot access
+researcher endpoints, prompts, credentials, or admin records. Server-side
+rolling limits allow three evaluator sessions per network client and 30
+evaluator sessions deployment-wide per 24 hours, with at most eight participant
+messages in each evaluator session.
 
 ## Design explanation (under 500 words)
 
