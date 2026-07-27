@@ -20,9 +20,9 @@ export const DEFAULT_CONFIG = Object.freeze({
   triggerMode: "study",
   preJokeTurns: 2,
   jokeCue:
-    "We’ve been looking at this report for a while. You mentioned you had a quick joke—go on.",
+    "Continue the work conversation naturally; do not ask the participant to tell a joke.",
   jokeCueZh:
-    "这份报告我们已经看了一阵子了。你刚才说有个简短的笑话，说来听听吧。",
+    "继续自然地讨论工作，不要主动让参与者讲笑话。",
   targetJoke:
     "Why did the spreadsheet break up with the database? It had too many relationship problems.",
   targetJokeZh:
@@ -184,6 +184,7 @@ export function chooseBalancedCondition(sessions = [], random = Math.random) {
 export function createSession({
   condition,
   participantCode = "",
+  sessionPurpose = "research",
   config = DEFAULT_CONFIG,
   now = new Date().toISOString(),
   id = createSessionId(),
@@ -195,6 +196,7 @@ export function createSession({
   return {
     id,
     participantCode: cleanString(participantCode, "", 40),
+    sessionPurpose: sessionPurpose === "qa" ? "qa" : "research",
     condition,
     conditionLocked: true,
     configVersion: snapshot.version,
@@ -214,6 +216,7 @@ export function createSession({
     events: [
       eventRecord("session_created", now, {
         assignment: condition,
+        sessionPurpose: sessionPurpose === "qa" ? "qa" : "research",
         configVersion: snapshot.version,
       }),
     ],
@@ -226,7 +229,7 @@ export function startSession(session, now = new Date().toISOString()) {
   if (next.status !== "created") return next;
   const config = normalizeConfig(next.configSnapshot);
   next.status = "active";
-  next.phase = "pre_joke";
+  next.phase = "monitoring_joke";
   next.startedAt = now;
   next.updatedAt = now;
   appendAssistant(next, config.openingMessage, "opening", now);
@@ -259,12 +262,6 @@ export function submitParticipantMessage(
   appendParticipant(next, cleanText, "participant_message", now, messageId);
   next.updatedAt = now;
 
-  const audit = auditJoke(cleanText, {
-    expectedJoke: config.targetJoke,
-    inJokeWindow: next.phase === "joke_window",
-  });
-  next.events.push(eventRecord("joke_audit", now, { messageId, ...audit }));
-
   if (isMetaProbe(cleanText)) {
     const reply =
       "Let’s stay with the work scenario for now—were you able to check the final table?";
@@ -273,37 +270,25 @@ export function submitParticipantMessage(
     return result(next, reply, config.regularDelayMs);
   }
 
-  if (
-    config.triggerMode === "auto_demo" &&
-    !next.jokeSeen &&
-    audit.label === "joke" &&
-    audit.confidence >= 0.75
-  ) {
-    return deliverTreatment(next, messageId, audit, config, now, "auto_demo");
-  }
-
-  if (next.phase === "pre_joke") {
-    next.preJokeUserTurns += 1;
-    if (next.preJokeUserTurns >= config.preJokeTurns) {
-      next.phase = "joke_window";
-      appendAssistant(next, config.jokeCue, "joke_invitation", now);
-      next.events.push(eventRecord("joke_window_opened", now));
-      return result(next, config.jokeCue, config.regularDelayMs);
+  if (!next.jokeSeen) {
+    const audit = auditJoke(cleanText, {
+      expectedJoke: config.targetJoke,
+    });
+    next.events.push(eventRecord("joke_audit", now, { messageId, ...audit }));
+    if (audit.label === "joke" && audit.confidence >= 0.75) {
+      return deliverTreatment(
+        next,
+        messageId,
+        audit,
+        config,
+        now,
+        "condition_blind_detector",
+      );
     }
+    next.preJokeUserTurns += 1;
     const reply = sharedWorkReply(cleanText, next.preJokeUserTurns, "pre");
     appendAssistant(next, reply, "shared_dialogue", now);
     return result(next, reply, config.regularDelayMs);
-  }
-
-  if (next.phase === "joke_window") {
-    if (isRefusalOrClarification(cleanText)) {
-      const reply =
-        "No problem—take a moment. Share it when you’re ready, then we’ll get back to the report.";
-      appendAssistant(next, reply, "shared_joke_retry", now);
-      next.events.push(eventRecord("joke_task_retry", now, { messageId }));
-      return result(next, reply, config.regularDelayMs);
-    }
-    return deliverTreatment(next, messageId, audit, config, now, "study_protocol");
   }
 
   if (next.phase === "post_joke" || next.phase === "survey_ready") {
@@ -372,7 +357,7 @@ export function reactionFor(condition, config = DEFAULT_CONFIG) {
 
 export function auditJoke(
   text,
-  { expectedJoke = "", inJokeWindow = false } = {},
+  { expectedJoke = "" } = {},
 ) {
   const cleanText = cleanString(text, "", 2000);
   const normalizedText = normalizeForComparison(cleanText);
@@ -394,16 +379,8 @@ export function auditJoke(
   if (patternMatch) {
     return {
       label: "joke",
-      confidence: inJokeWindow ? 0.88 : 0.78,
+      confidence: 0.78,
       method: "prototype_heuristic",
-      conditionBlind: true,
-    };
-  }
-  if (inJokeWindow && !isRefusalOrClarification(cleanText)) {
-    return {
-      label: "uncertain",
-      confidence: 0.5,
-      method: "protocol_window",
       conditionBlind: true,
     };
   }
@@ -427,7 +404,6 @@ export function publicSessionView(session) {
   return {
     id: session.id,
     status: session.status,
-    phase: session.phase,
     participantCode: session.participantCode,
     createdAt: session.createdAt,
     startedAt: session.startedAt,
@@ -444,6 +420,7 @@ export function sessionToCsvRow(session) {
   return {
     session_id: session.id,
     participant_code: session.participantCode,
+    session_purpose: session.sessionPurpose || "research",
     condition: session.condition,
     status: session.status,
     trigger_mode: session.configSnapshot?.triggerMode ?? "",
