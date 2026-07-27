@@ -196,6 +196,152 @@ test("Worker flags QA sessions for researchers but not participants", async () =
   assert.equal("sessionPurpose" in participant.body.session, false);
 });
 
+test("public evaluator creates condition-selectable live DeepSeek QA sessions", async () => {
+  const database = new MockD1();
+  const originalFetch = globalThis.fetch;
+  const deepSeekPayloads = [];
+  globalThis.fetch = async (_url, options) => {
+    const payload = JSON.parse(options.body);
+    deepSeekPayloads.push(payload);
+    const systemPrompt = payload.messages?.[0]?.content || "";
+    const content = systemPrompt.includes("matched set")
+      ? JSON.stringify({
+          negative_prefix: "Not appropriate for work.",
+          neutral_prefix: "All right.",
+          polite_positive_prefix: "Heh...",
+        })
+      : payload.response_format
+        ? JSON.stringify({
+            label: "attempted_humor",
+            confidence: 0.99,
+            reason: "clear workplace pun",
+          })
+        : "Okay, I’ll keep that update in mind.";
+    return new Response(
+      JSON.stringify({ choices: [{ message: { content } }] }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    );
+  };
+  const env = {
+    DB: database,
+    DEEPSEEK_API_KEY: "test-only-placeholder",
+    DEEPSEEK_MODEL: "deepseek-v4-flash",
+    ALLOWED_ORIGINS: ORIGIN,
+  };
+  const expected = {
+    negative: /not appropriate for work/i,
+    neutral: /^All right\./,
+    polite_positive: /^Heh\.\.\./,
+  };
+
+  try {
+    for (const condition of [
+      "negative",
+      "neutral",
+      "polite_positive",
+    ]) {
+      const created = await callWorker(env, "/api/evaluator/sessions", {
+        method: "POST",
+        body: { condition, language: "en" },
+      });
+      assert.equal(created.status, 201);
+      assert.equal(created.body.condition, condition);
+      assert.equal(created.body.model, "deepseek-v4-flash");
+      assert.equal(created.body.session.status, "active");
+      assert.equal("condition" in created.body.session, false);
+      assert.equal(typeof created.body.participantToken, "string");
+
+      const treatment = await callWorker(
+        env,
+        `/api/sessions/${created.body.participantToken}/messages`,
+        {
+          method: "POST",
+          body: { text: DEFAULT_CONFIG.targetJoke },
+        },
+      );
+      assert.equal(treatment.status, 200);
+      assert.match(treatment.body.reply, expected[condition]);
+      assert.equal(treatment.body.session.status, "treatment_delivered");
+    }
+
+    const stored = [...database.rows.values()].map((row) =>
+      JSON.parse(row.data),
+    );
+    assert.equal(stored.every((session) => session.sessionPurpose === "qa"), true);
+    assert.equal(stored.every((session) => session.participantCode === "PUBLIC-EVALUATOR"), true);
+    assert.equal(deepSeekPayloads.length >= 6, true);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("public evaluator rejects invalid conditions and requests without a site origin", async () => {
+  const env = {
+    DB: new MockD1(),
+    ALLOWED_ORIGINS: ORIGIN,
+  };
+  const invalid = await callWorker(env, "/api/evaluator/sessions", {
+    method: "POST",
+    body: { condition: "unknown", language: "en" },
+  });
+  assert.equal(invalid.status, 400);
+
+  const request = new Request(
+    "https://worker.example/api/evaluator/sessions",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ condition: "negative", language: "en" }),
+    },
+  );
+  const response = await worker.fetch(request, env);
+  assert.equal(response.status, 403);
+});
+
+test("public evaluator enforces daily client and global usage limits", async () => {
+  const clientLimitedEnv = {
+    DB: new MockD1(),
+    ALLOWED_ORIGINS: ORIGIN,
+    PUBLIC_EVALUATOR_CLIENT_DAILY_LIMIT: "1",
+    PUBLIC_EVALUATOR_DAILY_LIMIT: "10",
+  };
+  const first = await callWorker(clientLimitedEnv, "/api/evaluator/sessions", {
+    method: "POST",
+    body: { condition: "negative", language: "en" },
+  });
+  assert.equal(first.status, 201);
+  const second = await callWorker(clientLimitedEnv, "/api/evaluator/sessions", {
+    method: "POST",
+    body: { condition: "neutral", language: "en" },
+  });
+  assert.equal(second.status, 429);
+
+  const globallyLimitedEnv = {
+    DB: new MockD1(),
+    ALLOWED_ORIGINS: ORIGIN,
+    PUBLIC_EVALUATOR_CLIENT_DAILY_LIMIT: "10",
+    PUBLIC_EVALUATOR_DAILY_LIMIT: "1",
+  };
+  const globalFirst = await callWorker(
+    globallyLimitedEnv,
+    "/api/evaluator/sessions",
+    {
+      method: "POST",
+      body: { condition: "negative", language: "en" },
+    },
+  );
+  assert.equal(globalFirst.status, 201);
+  const globalSecond = await callWorker(
+    globallyLimitedEnv,
+    "/api/evaluator/sessions",
+    {
+      method: "POST",
+      body: { condition: "neutral", language: "en" },
+    },
+  );
+  assert.equal(globalSecond.status, 429);
+});
+
 async function callWorker(
   env,
   path,
@@ -296,4 +442,3 @@ class MockD1 {
     };
   }
 }
-
