@@ -15,7 +15,7 @@ participant flow. A secondary browser-local panel sends matched input to all
 three deterministic fallbacks for immediate side-by-side comparison. Live QA
 sessions are flagged and excluded from formal metrics; the page cannot access
 researcher endpoints, prompts, credentials, or admin records. Server-side
-rolling limits allow three evaluator sessions per network client and 30
+rolling limits allow four evaluator sessions per network client and 30
 evaluator sessions deployment-wide per 24 hours, with at most eight participant
 messages in each evaluator session.
 
