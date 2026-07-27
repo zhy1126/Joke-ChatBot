@@ -34,7 +34,7 @@ const CONDITION_CLASSES = Object.freeze({
 const parameters = new URLSearchParams(window.location.search);
 const activeView = parameters.get("view") ?? "researcher";
 const activeSessionId = parameters.get("session");
-const remoteSettings = readRemoteSettings(parameters);
+const remoteSettings = readRemoteSettings();
 
 bindBackendConnection(remoteSettings);
 
@@ -68,6 +68,7 @@ function bindBackendConnection(settings) {
   const form = byId("backend-connection-form");
   if (!form) return;
   byId("backend-api-url").value = settings.apiBaseUrl;
+  byId("backend-api-url").readOnly = true;
   byId("researcher-access-key").value = settings.researcherKey;
   byId("backend-status").textContent = settings.apiBaseUrl
     ? settings.researcherKey
@@ -78,11 +79,10 @@ function bindBackendConnection(settings) {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const next = saveRemoteSettings({
-      apiBaseUrl: byId("backend-api-url").value,
       researcherKey: byId("researcher-access-key").value,
     });
     if (!next.apiBaseUrl) {
-      showToast("Enter a valid HTTPS Worker URL.");
+      showToast("Deploy the Worker and set its URL in runtime-config.js first.");
       return;
     }
     try {
